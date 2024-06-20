@@ -3,12 +3,17 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 exports.register = (req, res) => {
-  const { username, password, email } = req.body;
+  const { username, password, email, role } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-  User.create({ username, password: hashedPassword, email }, (err, user) => {
+  User.create({ username, password: hashedPassword, email, role }, (err, user) => {
     if (err) return res.status(500).send(err);
-    res.status(201).send('User registered successfully');
+    res.status(201).json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role
+    });
   });
 };
 
@@ -26,7 +31,17 @@ exports.login = (req, res) => {
       expiresIn: '1h',
     });
 
-    res.json({ token });
+    res.json({ token, user: { id: user.id, username: user.username, email: user.email, role: user.role } });
+  });
+};
+
+exports.updateUserInfo = (req, res) => {
+  const { id } = req.user;
+  const { avatar, bio } = req.body;
+
+  User.updateInfo(id, { avatar, bio }, (err, result) => {
+    if (err) return res.status(500).send(err);
+    res.send('User information updated successfully');
   });
 };
 
