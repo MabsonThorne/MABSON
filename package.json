@@ -1,5 +1,5 @@
 {
-  "name": "newgotong",
+  "name": "gotong",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -23,7 +23,8 @@
   "devDependencies": {
     "autoprefixer": "^10.4.8",
     "postcss": "^8.4.16",
-    "tailwindcss": "^3.1.8"
+    "tailwindcss": "^3.1.8",
+    "@babel/plugin-proposal-private-property-in-object": "^7.18.6" // 确保这一行存在
   },
   "scripts": {
     "start": "react-scripts start",
