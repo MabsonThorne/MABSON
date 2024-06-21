@@ -1,95 +1,58 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 
 const FrameComponent2 = ({ className = "" }) => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const slides = ["/image1.png", "/image2.png", "/image3.png"];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [slides.length]);
-
-  const onTextClick = useCallback(() => {
-    // Navigate to "采购端"
-  }, []);
-
-  const onTextClick1 = useCallback(() => {
-    // Navigate to "需求端"
-  }, []);
-
-  const onButtonClick = useCallback(() => {
-    // Navigate to "消息"
-  }, []);
-
-  const onButtonContainerClick = useCallback(() => {
-    if (isLoggedIn) {
-      navigate("/3");
-    } else {
-      navigate("/4");
-    }
-  }, [isLoggedIn, navigate]);
 
   const onButtonClick1 = useCallback(() => {
-    if (isLoggedIn) {
-      navigate("/1");
-    } else {
-      navigate("/4");
-    }
-  }, [isLoggedIn, navigate]);
-
-  useEffect(() => {
-    // 假设有一个函数 `checkLoginStatus` 用于检查用户是否登录
-    const checkLoginStatus = () => {
-      // 这里应该有一个实际的登录状态检查逻辑
-      setIsLoggedIn(true); // 根据实际登录状态设置
-    };
-    checkLoginStatus();
-  }, []);
+    navigate("/4");
+  }, [navigate]);
 
   return (
-    <div className={`flex flex-col items-end justify-start gap-12 max-w-full text-center text-5xl text-red font-medium ${className}`}>
-      <header className="w-full flex flex-row items-start justify-between gap-5 text-left text-3xl text-red font-medium">
-        <div className="relative flex items-start justify-start">
-          <h1 className="m-0 relative text-inherit leading-[150%] font-medium font-inherit whitespace-nowrap">
-            <span>GO</span><span className="text-black">TONG</span>
-          </h1>
-          <img className="h-24 w-24 absolute top-1/2 left-[-6rem] transform -translate-y-1/2 object-cover z-1" loading="lazy" alt="" src="/logo1-1@2x.png" />
-        </div>
-        <div className="flex flex-col items-start justify-start gap-5 text-lg text-black">
-          <div className="flex flex-row items-start justify-start gap-12">
-            <h2 className="cursor-pointer" onClick={onTextClick}>采购端</h2>
-            <h2 className="cursor-pointer" onClick={onTextClick1}>需求端</h2>
-          </div>
-          <div className="flex flex-row items-start justify-between gap-5 text-base">
-            <Button variant="contained" sx={{ textTransform: "none", color: "#000", fontSize: "16", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" } }} onClick={onButtonClick}>
-              消息
-            </Button>
-            <div className="rounded-lg bg-red flex items-start justify-start py-2 px-6 cursor-pointer" onClick={onButtonContainerClick}>
-              <div className="font-medium">个人</div>
-            </div>
-            <select className="bg-transparent border-none flex items-start justify-start">
-              <option value="option_1">Option 1</option>
-            </select>
+    <div
+      className={`self-stretch flex flex-col items-end justify-start gap-[46px] max-w-full text-center text-45xl text-red font-small-text mq750:gap-[23px] ${className}`}
+    >
+      <header className="w-[1180px] flex flex-row items-center justify-between gap-[20px] max-w-full text-left text-29xl text-red font-small-text">
+        <div className="flex flex-row items-center justify-between w-full">
+          <div className="flex flex-row items-center justify-start">
+            <img
+              className="h-[98px] w-[202px] absolute !m-[0] top-[calc(50%_-_49px)] left-[-149px] object-cover z-[1]"
+              loading="lazy"
+              alt=""
+              src="/logo1-1@2x.png"
+            />
           </div>
         </div>
       </header>
-      <div className="relative flex items-center justify-center bg-cover bg-no-repeat" style={{ backgroundImage: `url(${slides[currentSlide]})`, height: "500px" }}>
-        <h1 className="absolute top-10 left-10 text-white text-5xl font-bold">GO<span className="text-red">TONG</span></h1>
-        <div className="absolute bottom-10 left-10 text-white text-xl">购你所购，想你所想</div>
-        <Button className="absolute bottom-10 right-10" variant="contained" sx={{ textTransform: "none", color: "#fff", fontSize: "16", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" } }} onClick={onButtonClick1}>
-          {isLoggedIn ? "发布" : "登录"}
-        </Button>
-        <div className="absolute bottom-10 right-10 flex gap-2">
-          {slides.map((_, index) => (
-            <span key={index} className={`h-2 w-2 rounded-full ${currentSlide === index ? 'bg-red' : 'bg-gray-300'}`}></span>
-          ))}
+      <div className="self-stretch flex flex-row items-center justify-end py-0 pr-1 pl-0 box-border max-w-full">
+        <div className="flex-1 rounded-lg overflow-hidden flex flex-col items-center justify-start py-48 pr-5 pl-[30px] box-border gap-[24px] bg-[url('/public/header-with-image@3x.png')] bg-cover bg-no-repeat bg-[top] max-w-full mq750:pt-[125px] mq750:pb-[125px] mq750:box-border">
+          <h1 className="m-0 w-[841px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block [filter:drop-shadow(0px_4px_4px_rgba(0,_0,_0,_0.25))] max-w-full mq450:text-19xl mq1000:text-32xl">
+            <span>GO</span>
+            <span className="text-white">TONG</span>
+          </h1>
+          <div className="w-[841px] relative text-5xl leading-[150%] text-white flex items-center justify-center max-w-full mq450:text-lgi mq450:leading-[29px]">
+            购你所购，想你所想
+          </div>
+          <div className="w-[841px] h-[52px] flex flex-row items-start justify-center max-w-full">
+            <Button
+              className="self-stretch w-20 shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer"
+              variant="contained"
+              sx={{
+                textTransform: "none",
+                color: "#fff",
+                fontSize: "16",
+                background: "#ff0000",
+                borderRadius: "8px",
+                "&:hover": { background: "#ff0000" },
+                width: 80,
+              }}
+              onClick={onButtonClick1}
+            >
+              登录
+            </Button>
+          </div>
         </div>
       </div>
     </div>
