@@ -28,6 +28,10 @@ function App() {
 
     switch (pathname) {
       case "/":
+        title = "GOTONG";
+        metaDescription = "";
+        break;
+      case "/1":
         title = "";
         metaDescription = "";
         break;
@@ -35,15 +39,11 @@ function App() {
         title = "";
         metaDescription = "";
         break;
-      case "/3":
+      case "3":
         title = "";
         metaDescription = "";
         break;
-      case "/":
-        title = "";
-        metaDescription = "";
-        break;
-      case "/1":
+      case "/4":
         title = "";
         metaDescription = "";
         break;
@@ -66,10 +66,10 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Frame />} />
-      <Route path="/2" element={<Frame1 />} />
-      <Route path="/3" element={<Frame2 />} />
-      <Route path="/" element={<Frame3 />} />
-      <Route path="/1" element={<Frame4 />} />
+      <Route path="/1" element={<Frame1 />} />
+      <Route path="/2" element={<Frame2 />} />
+      <Route path="/3" element={<Frame3 />} />
+      <Route path="/4" element={<Frame4 />} />
     </Routes>
   );
 }
