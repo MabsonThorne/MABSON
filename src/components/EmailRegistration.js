@@ -1,12 +1,7 @@
 import React, { useState } from "react";
-import {
-  TextField,
-  Button,
-  MenuItem,
-  Select,
-} from "@mui/material";
-import PropTypes from "prop-types";
+import { TextField, Button, MenuItem, Select } from "@mui/material";
 import axios from "axios";
+import PropTypes from "prop-types";
 
 const EmailRegistration = ({ className = "" }) => {
   const [email, setEmail] = useState("");
@@ -27,7 +22,7 @@ const EmailRegistration = ({ className = "" }) => {
     if (!isEmailValid) return;
 
     try {
-      const response = await axios.post("http://106.52.158.123:3000/api/check-email", { email });
+      const response = await axios.post("http://106.52.158.123:5000/api/check-email", { email });
       if (response.data.exists) {
         setIsRegister(false);
         setIsEmailChecked(true);
@@ -42,7 +37,7 @@ const EmailRegistration = ({ className = "" }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post("http://106.52.158.123:3000/api/login", { email, password });
+      const response = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
       localStorage.setItem("token", response.data.token);
       window.location.href = "http://106.52.158.123:3000";
     } catch (error) {
@@ -57,7 +52,7 @@ const EmailRegistration = ({ className = "" }) => {
     }
 
     try {
-      const response = await axios.post("http://106.52.158.123:3000/api/register", { username, email, password, role });
+      const response = await axios.post("http://106.52.158.123:5000/api/register", { username, email, password, role });
       window.location.href = `http://106.52.158.123:3000/2/${response.data.id}`;
     } catch (error) {
       console.error("Registration failed:", error);
@@ -65,9 +60,7 @@ const EmailRegistration = ({ className = "" }) => {
   };
 
   return (
-    <div
-      className={`w-[400px] flex flex-col items-start justify-start gap-[24px] max-w-full text-center text-base text-gray font-small-text ${className}`}
-    >
+    <div className={`w-[400px] flex flex-col items-start justify-start gap-[24px] max-w-full text-center text-base text-gray font-small-text ${className}`}>
       <div className="self-stretch flex flex-row items-start justify-center py-0 px-5 text-5xl text-black">
         <div className="flex flex-col items-start justify-start gap-[4px]">
           <div className="flex flex-row items-start justify-start py-0 px-8">
@@ -197,23 +190,25 @@ const EmailRegistration = ({ className = "" }) => {
             </Select>
           </>
         )}
-        <Button
-          className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
-          disableElevation
-          variant="contained"
-          onClick={isRegister ? handleRegister : handleLogin}
-          sx={{
-            textTransform: "none",
-            color: "#fff",
-            fontSize: "16",
-            background: "#ff0000",
-            borderRadius: "8px",
-            "&:hover": { background: "#ff0000" },
-            height: 40,
-          }}
-        >
-          {isRegister ? "注册" : "登录"}
-        </Button>
+        {isEmailChecked && (
+          <Button
+            className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
+            disableElevation
+            variant="contained"
+            onClick={isRegister ? handleRegister : handleLogin}
+            sx={{
+              textTransform: "none",
+              color: "#fff",
+              fontSize: "16",
+              background: "#ff0000",
+              borderRadius: "8px",
+              "&:hover": { background: "#ff0000" },
+              height: 40,
+            }}
+          >
+            {isRegister ? "注册" : "登录"}
+          </Button>
+        )}
       </div>
       <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[8px]">
         <div className="flex-1 flex flex-col items-start justify-start pt-[11.5px] px-0 pb-0 box-border min-w-[104px]">
@@ -228,10 +223,9 @@ const EmailRegistration = ({ className = "" }) => {
       </div>
       <Button
         className="self-stretch h-10"
-        startIcon={<img width="20px" height="20px" src="/google.svg" alt="Google" />}
+        startIcon={<img width="20px" height="20px" src="/google.svg" />}
         disableElevation
         variant="contained"
-        onClick={() => window.location.href = "https://accounts.google.com/o/oauth2/auth"}
         sx={{
           textTransform: "none",
           color: "#000",
@@ -246,10 +240,9 @@ const EmailRegistration = ({ className = "" }) => {
       </Button>
       <Button
         className="self-stretch h-10"
-        startIcon={<img width="20px" height="20px" src="/wechat.svg" alt="WeChat" />}
+        startIcon={<img width="20px" height="20px" src="/wechat.svg" />} // 假设微信图标在public目录下
         disableElevation
         variant="contained"
-        onClick={() => window.location.href = "https://wechat.com/oauth2/auth"}
         sx={{
           textTransform: "none",
           color: "#000",
@@ -260,14 +253,13 @@ const EmailRegistration = ({ className = "" }) => {
           height: 40,
         }}
       >
-        WeChat
+        微信
       </Button>
       <Button
         className="self-stretch h-10"
-        startIcon={<img width="20px" height="20px" src="/qq.svg" alt="QQ" />}
+        startIcon={<img width="20px" height="20px" src="/qq.svg" />} // 假设QQ图标在public目录下
         disableElevation
         variant="contained"
-        onClick={() => window.location.href = "https://qq.com/oauth2/auth"}
         sx={{
           textTransform: "none",
           color: "#000",
