@@ -99,44 +99,42 @@ const EmailRegistration = ({ className = "" }) => {
           helperText={!isEmailValid ? "请输入有效的邮箱" : ""}
         />
         {isEmailChecked && !isRegister && (
-          <>
-            <TextField
-              className="[border:none] bg-[transparent] self-stretch h-10 font-small-text font-medium text-xl text-gray"
-              placeholder="请输入密码"
-              variant="outlined"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              sx={{
-                "& fieldset": { borderColor: "#e0e0e0" },
-                "& .MuiInputBase-root": {
-                  height: "40px",
-                  backgroundColor: "#fff",
-                  borderRadius: "8px",
-                  fontSize: "20px",
-                },
-                "& .MuiInputBase-input": { color: "#828282" },
-              }}
-            />
-            <Button
-              className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
-              disableElevation
-              variant="contained"
-              onClick={handleLogin}
-              sx={{
-                textTransform: "none",
-                color: "#fff",
-                fontSize: "16",
-                background: "#ff0000",
+          <TextField
+            className="[border:none] bg-[transparent] self-stretch h-10 font-small-text font-medium text-xl text-gray"
+            placeholder="请输入密码"
+            variant="outlined"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            sx={{
+              "& fieldset": { borderColor: "#e0e0e0" },
+              "& .MuiInputBase-root": {
+                height: "40px",
+                backgroundColor: "#fff",
                 borderRadius: "8px",
-                "&:hover": { background: "#ff0000" },
-                height: 40,
-              }}
-            >
-              登录
-            </Button>
-          </>
+                fontSize: "20px",
+              },
+              "& .MuiInputBase-input": { color: "#828282" },
+            }}
+          />
         )}
+        <Button
+          className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
+          disableElevation
+          variant="contained"
+          onClick={isRegister ? handleRegister : handleLogin}
+          sx={{
+            textTransform: "none",
+            color: "#fff",
+            fontSize: "16",
+            background: "#ff0000",
+            borderRadius: "8px",
+            "&:hover": { background: "#ff0000" },
+            height: 40,
+          }}
+        >
+          {isRegister ? "注册" : "登录"}
+        </Button>
         {isEmailChecked && isRegister && (
           <>
             <TextField
@@ -209,23 +207,6 @@ const EmailRegistration = ({ className = "" }) => {
               <MenuItem value="consumer">消费者</MenuItem>
               <MenuItem value="searcher">采购者</MenuItem>
             </Select>
-            <Button
-              className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
-              disableElevation
-              variant="contained"
-              onClick={handleRegister}
-              sx={{
-                textTransform: "none",
-                color: "#fff",
-                fontSize: "16",
-                background: "#ff0000",
-                borderRadius: "8px",
-                "&:hover": { background: "#ff0000" },
-                height: 40,
-              }}
-            >
-              注册
-            </Button>
           </>
         )}
       </div>
