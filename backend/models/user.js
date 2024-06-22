@@ -20,6 +20,13 @@ const User = {
     });
   },
 
+  findById: (id, callback) => {
+    db.query('SELECT * FROM user_info_db.user_info WHERE id = ?', [id], (err, results) => {
+      if (err) return callback(err);
+      callback(null, results[0]);
+    });
+  },
+
   updateInfo: (id, data, callback) => {
     const { avatar, bio } = data;
     db.query('UPDATE user_info_db.user_info SET avatar = ?, bio = ? WHERE id = ?', [avatar, bio, id], callback);
