@@ -48,9 +48,9 @@ exports.checkEmail = (req, res) => {
 
 exports.updateUserInfo = (req, res) => {
   const { id } = req.user;
-  const { avatar, bio } = req.body;
+  const { avatar, bio, gender } = req.body;
 
-  User.updateInfo(id, { avatar, bio }, (err, result) => {
+  UserProfile.update(id, { avatar, bio, gender }, (err, result) => {
     if (err) return res.status(500).send(err);
     res.send('User information updated successfully');
   });
@@ -74,25 +74,10 @@ exports.getAllUsers = (req, res) => {
 exports.getUserProfile = (req, res) => {
   const userId = req.params.id;
 
-  UserProfile.findById(userId, (err, userProfile) => {
+  UserProfile.findByUserId(userId, (err, userProfile) => {
     if (err) return res.status(500).send(err);
     if (!userProfile) return res.status(404).send('User profile not found');
     res.json(userProfile);
-  });
-};
-
-exports.updateUserProfile = (req, res) => {
-  const userId = req.params.id;
-  const { bio, gender } = req.body;
-  let avatar_file = null;
-
-  if (req.file) {
-    avatar_file = `/uploads/${req.file.filename}`;
-  }
-
-  UserProfile.update(userId, { bio, gender, avatar_file }, (err, result) => {
-    if (err) return res.status(500).send(err);
-    res.send('User profile updated successfully');
   });
 };
 
