@@ -99,24 +99,43 @@ const EmailRegistration = ({ className = "" }) => {
           helperText={!isEmailValid ? "请输入有效的邮箱" : ""}
         />
         {isEmailChecked && !isRegister && (
-          <TextField
-            className="[border:none] bg-[transparent] self-stretch h-10 font-small-text font-medium text-xl text-gray"
-            placeholder="请输入密码"
-            variant="outlined"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            sx={{
-              "& fieldset": { borderColor: "#e0e0e0" },
-              "& .MuiInputBase-root": {
-                height: "40px",
-                backgroundColor: "#fff",
+          <>
+            <TextField
+              className="[border:none] bg-[transparent] self-stretch h-10 font-small-text font-medium text-xl text-gray"
+              placeholder="请输入密码"
+              variant="outlined"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              sx={{
+                "& fieldset": { borderColor: "#e0e0e0" },
+                "& .MuiInputBase-root": {
+                  height: "40px",
+                  backgroundColor: "#fff",
+                  borderRadius: "8px",
+                  fontSize: "20px",
+                },
+                "& .MuiInputBase-input": { color: "#828282" },
+              }}
+            />
+            <Button
+              className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
+              disableElevation
+              variant="contained"
+              onClick={handleLogin}
+              sx={{
+                textTransform: "none",
+                color: "#fff",
+                fontSize: "16",
+                background: "#ff0000",
                 borderRadius: "8px",
-                fontSize: "20px",
-              },
-              "& .MuiInputBase-input": { color: "#828282" },
-            }}
-          />
+                "&:hover": { background: "#ff0000" },
+                height: 40,
+              }}
+            >
+              登录
+            </Button>
+          </>
         )}
         {isEmailChecked && isRegister && (
           <>
@@ -190,26 +209,24 @@ const EmailRegistration = ({ className = "" }) => {
               <MenuItem value="consumer">消费者</MenuItem>
               <MenuItem value="searcher">采购者</MenuItem>
             </Select>
+            <Button
+              className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
+              disableElevation
+              variant="contained"
+              onClick={handleRegister}
+              sx={{
+                textTransform: "none",
+                color: "#fff",
+                fontSize: "16",
+                background: "#ff0000",
+                borderRadius: "8px",
+                "&:hover": { background: "#ff0000" },
+                height: 40,
+              }}
+            >
+              注册
+            </Button>
           </>
-        )}
-        {isEmailChecked && (
-          <Button
-            className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
-            disableElevation
-            variant="contained"
-            onClick={isRegister ? handleRegister : handleLogin}
-            sx={{
-              textTransform: "none",
-              color: "#fff",
-              fontSize: "16",
-              background: "#ff0000",
-              borderRadius: "8px",
-              "&:hover": { background: "#ff0000" },
-              height: 40,
-            }}
-          >
-            {isRegister ? "注册" : "登录"}
-          </Button>
         )}
       </div>
       <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[8px]">
@@ -245,7 +262,7 @@ const EmailRegistration = ({ className = "" }) => {
       </Button>
       <Button
         className="self-stretch h-10"
-        startIcon={<img width="20px" height="20px" src="/wechat.svg" />} // 假设微信图标在public目录下
+        startIcon={<img width="20px" height="20px" src="/wechat.svg" />}
         disableElevation
         variant="contained"
         sx={{
@@ -265,7 +282,7 @@ const EmailRegistration = ({ className = "" }) => {
       </Button>
       <Button
         className="self-stretch h-10"
-        startIcon={<img width="20px" height="20px" src="/qq.svg" />} // 假设QQ图标在public目录下
+        startIcon={<img width="20px" height="20px" src="/qq.svg" />}
         disableElevation
         variant="contained"
         sx={{
