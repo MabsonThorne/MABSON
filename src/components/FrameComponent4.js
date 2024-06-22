@@ -14,7 +14,7 @@ const FrameComponent4 = ({ className = "" }) => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const response = await axios.get('http://106.52.158.123:3000/api/profile', {
+        const response = await axios.get('http://106.52.158.123:5000/api/profile', { // 更新为5000端口
           headers: { Authorization: `Bearer ${token}` }
         });
         setUserProfile(response.data);
