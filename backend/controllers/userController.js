@@ -22,10 +22,10 @@ exports.login = (req, res) => {
 
   User.findByEmail(email, (err, user) => {
     if (err) return res.status(500).send(err);
-    if (!user) return res.status(404).send('User not found');
+    if (!user) return res.status(404).send('用户未找到');
 
     const isValidPassword = bcrypt.compareSync(password, user.password);
-    if (!isValidPassword) return res.status(401).send('Invalid password');
+    if (!isValidPassword) return res.status(401).send('密码无效');
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: '1h',
@@ -41,7 +41,7 @@ exports.updateUserInfo = (req, res) => {
 
   User.updateInfo(id, { avatar, bio }, (err, result) => {
     if (err) return res.status(500).send(err);
-    res.send('User information updated successfully');
+    res.send('用户信息更新成功');
   });
 };
 
@@ -49,5 +49,15 @@ exports.getAllUsers = (req, res) => {
   User.getAll((err, users) => {
     if (err) res.status(500).send(err);
     res.json(users);
+  });
+};
+
+exports.getUserProfile = (req, res) => {
+  const { id } = req.user;
+
+  User.findById(id, (err, user) => {
+    if (err) return res.status(500).send(err);
+    if (!user) return res.status(404).send('用户未找到');
+    res.json(user);
   });
 };
