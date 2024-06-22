@@ -25,11 +25,10 @@ const EmailRegistration = ({ className = "" }) => {
       const response = await axios.post("http://106.52.158.123:5000/api/check-email", { email });
       if (response.data.exists) {
         setIsRegister(false);
-        setIsEmailChecked(true);
       } else {
         setIsRegister(true);
-        setIsEmailChecked(true);
       }
+      setIsEmailChecked(true);
     } catch (error) {
       console.error("Error checking email:", error);
     }
@@ -118,23 +117,6 @@ const EmailRegistration = ({ className = "" }) => {
             }}
           />
         )}
-        <Button
-          className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
-          disableElevation
-          variant="contained"
-          onClick={isRegister ? handleRegister : handleLogin}
-          sx={{
-            textTransform: "none",
-            color: "#fff",
-            fontSize: "16",
-            background: "#ff0000",
-            borderRadius: "8px",
-            "&:hover": { background: "#ff0000" },
-            height: 40,
-          }}
-        >
-          {isRegister ? "注册" : "登录"}
-        </Button>
         {isEmailChecked && isRegister && (
           <>
             <TextField
@@ -208,6 +190,44 @@ const EmailRegistration = ({ className = "" }) => {
               <MenuItem value="searcher">采购者</MenuItem>
             </Select>
           </>
+        )}
+        {isEmailChecked && (
+          <Button
+            className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
+            disableElevation
+            variant="contained"
+            onClick={isRegister ? handleRegister : handleLogin}
+            sx={{
+              textTransform: "none",
+              color: "#fff",
+              fontSize: "16",
+              background: "#ff0000",
+              borderRadius: "8px",
+              "&:hover": { background: "#ff0000" },
+              height: 40,
+            }}
+          >
+            {isRegister ? "注册" : "登录"}
+          </Button>
+        )}
+        {!isEmailChecked && (
+          <Button
+            className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
+            disableElevation
+            variant="contained"
+            onClick={handleLogin}
+            sx={{
+              textTransform: "none",
+              color: "#fff",
+              fontSize: "16",
+              background: "#ff0000",
+              borderRadius: "8px",
+              "&:hover": { background: "#ff0000" },
+              height: 40,
+            }}
+          >
+            登录
+          </Button>
         )}
       </div>
       <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[8px]">
