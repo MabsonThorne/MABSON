@@ -31,21 +31,21 @@ function App() {
         title = "GOTONG";
         metaDescription = "";
         break;
-      case "/1":
-        title = "";
-        metaDescription = "";
+      case "/1/:productId":
+        title = "Product Details";
+        metaDescription = "Details of the product";
         break;
-      case "/2":
-        title = "";
-        metaDescription = "";
+      case "/2/:userId":
+        title = "User Profile";
+        metaDescription = "Details of the user profile";
         break;
-      case "3":
-        title = "";
-        metaDescription = "";
+      case "/3/:userId":
+        title = "Another User Page";
+        metaDescription = "Another page with user details";
         break;
       case "/4":
-        title = "";
-        metaDescription = "";
+        title = "Page 4";
+        metaDescription = "Details of page 4";
         break;
     }
 
@@ -66,11 +66,12 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Frame />} />
-      <Route path="/1" element={<Frame1 />} />
-      <Route path="/2" element={<Frame2 />} />
-      <Route path="/3" element={<Frame3 />} />
+      <Route path="/1/:productId" element={<Frame1 />} />
+      <Route path="/2/:userId" element={<Frame2 />} />
+      <Route path="/3/:userId" element={<Frame3 />} />
       <Route path="/4" element={<Frame4 />} />
     </Routes>
   );
 }
+
 export default App;
