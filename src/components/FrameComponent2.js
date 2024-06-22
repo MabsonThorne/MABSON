@@ -7,26 +7,28 @@ const FrameComponent2 = memo(({ className = "" }) => {
   const [showGotong, setShowGotong] = useState(false);
   const [showText, setShowText] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const onText1Click = useCallback(() => {
-    navigate("/");
-  }, [navigate]);
+  const checkLoginStatus = useCallback(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
 
-  const onText2Click = useCallback(() => {
-    navigate("/1");
-  }, [navigate]);
-
-  const onButtonContainerClick = useCallback(() => {
-    navigate("/2");
-  }, [navigate]);
-
-  const onButtonContainer1Click = useCallback(() => {
-    navigate("/3");
-  }, [navigate]);
+  useEffect(() => {
+    checkLoginStatus();
+  }, [checkLoginStatus]);
 
   const onButtonClick = useCallback(() => {
-    window.location.href = 'http://106.52.158.123:3000/7';
-  }, []);
+    if (isLoggedIn) {
+      window.location.href = 'http://106.52.158.123:3000/6';
+    } else {
+      window.location.href = 'http://106.52.158.123:3000/4';
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const gotongTimer = setTimeout(() => {
@@ -38,11 +40,7 @@ const FrameComponent2 = memo(({ className = "" }) => {
     }, 2000); // 在 GOTONG 动画结束后 2 秒显示 "购你所购，想你所想"
 
     const slideTimer = setInterval(() => {
-      setSlideIndex((prevIndex) => {
-        const newIndex = (prevIndex + 1) % 3;
-        console.log('Slide index changed to:', newIndex);
-        return newIndex;
-      });
+      setSlideIndex((prevIndex) => (prevIndex + 1) % 3);
     }, 4000); // 每4秒切换一次幻灯片
 
     return () => {
@@ -201,7 +199,7 @@ const FrameComponent2 = memo(({ className = "" }) => {
               onClick={onButtonClick}
             >
               <b className="relative text-base leading-[150%] font-semibold font-small-text text-white text-left button-text">
-                登录
+                {isLoggedIn ? "发布" : "登录"}
               </b>
             </button>
           </div>
