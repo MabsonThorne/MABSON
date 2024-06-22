@@ -6,6 +6,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const translationRoutes = require('./routes/translationRoutes');
 const cors = require('./middleware/cors');
 const errorHandler = require('./middleware/errorHandler');
+const auth = require('./middleware/auth');
 require('dotenv').config();
 
 app.use(express.json());
