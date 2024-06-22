@@ -3,12 +3,6 @@ const UserProfile = require('../models/userProfile');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
-const fs = require('fs');
-const path = require('path');
-const multer = require('multer');
-
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 
 exports.register = (req, res) => {
   const { username, password, email, role } = req.body;
@@ -78,9 +72,9 @@ exports.getAllUsers = (req, res) => {
 };
 
 exports.getUserProfile = (req, res) => {
-  const { id } = req.params;
+  const userId = req.params.id;
 
-  UserProfile.findById(id, (err, userProfile) => {
+  UserProfile.findById(userId, (err, userProfile) => {
     if (err) return res.status(500).send(err);
     if (!userProfile) return res.status(404).send('User profile not found');
     res.json(userProfile);
@@ -88,22 +82,17 @@ exports.getUserProfile = (req, res) => {
 };
 
 exports.updateUserProfile = (req, res) => {
-  const { id } = req.params;
+  const userId = req.params.id;
   const { bio, gender } = req.body;
-  const avatar = req.file;
+  let avatar_file = null;
 
-  const updateData = { bio, gender };
-
-  if (avatar) {
-    const avatarPath = path.join(__dirname, '..', 'uploads', avatar.originalname);
-    fs.writeFileSync(avatarPath, avatar.buffer);
-    updateData.avatar_file = `/uploads/${avatar.originalname}`;
+  if (req.file) {
+    avatar_file = `/uploads/${req.file.filename}`;
   }
 
-  UserProfile.findByIdAndUpdate(id, updateData, { new: true }, (err, userProfile) => {
+  UserProfile.update(userId, { bio, gender, avatar_file }, (err, result) => {
     if (err) return res.status(500).send(err);
-    if (!userProfile) return res.status(404).send('User profile not found');
-    res.json(userProfile);
+    res.send('User profile updated successfully');
   });
 };
 
