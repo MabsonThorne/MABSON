@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { TextField, Button, MenuItem, Select } from "@mui/material";
 import axios from "axios";
-import PropTypes from "prop-types";
 
 const EmailRegistration = ({ className = "" }) => {
   const [email, setEmail] = useState("");
@@ -25,10 +24,11 @@ const EmailRegistration = ({ className = "" }) => {
       const response = await axios.post("http://106.52.158.123:5000/api/check-email", { email });
       if (response.data.exists) {
         setIsRegister(false);
+        setIsEmailChecked(true);
       } else {
         setIsRegister(true);
+        setIsEmailChecked(true);
       }
-      setIsEmailChecked(true);
     } catch (error) {
       console.error("Error checking email:", error);
     }
@@ -59,9 +59,7 @@ const EmailRegistration = ({ className = "" }) => {
   };
 
   return (
-    <div
-      className={`w-[400px] flex flex-col items-start justify-start gap-[24px] max-w-full text-center text-base text-gray font-small-text ${className}`}
-    >
+    <div className={`w-[400px] flex flex-col items-start justify-start gap-[24px] max-w-full text-center text-base text-gray font-small-text ${className}`}>
       <div className="self-stretch flex flex-row items-start justify-center py-0 px-5 text-5xl text-black">
         <div className="flex flex-col items-start justify-start gap-[4px]">
           <div className="flex flex-row items-start justify-start py-0 px-8">
@@ -210,25 +208,6 @@ const EmailRegistration = ({ className = "" }) => {
             {isRegister ? "注册" : "登录"}
           </Button>
         )}
-        {!isEmailChecked && (
-          <Button
-            className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
-            disableElevation
-            variant="contained"
-            onClick={handleLogin}
-            sx={{
-              textTransform: "none",
-              color: "#fff",
-              fontSize: "16",
-              background: "#ff0000",
-              borderRadius: "8px",
-              "&:hover": { background: "#ff0000" },
-              height: 40,
-            }}
-          >
-            登录
-          </Button>
-        )}
       </div>
       <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[8px]">
         <div className="flex-1 flex flex-col items-start justify-start pt-[11.5px] px-0 pb-0 box-border min-w-[104px]">
@@ -255,9 +234,6 @@ const EmailRegistration = ({ className = "" }) => {
           "&:hover": { background: "#eee" },
           height: 40,
         }}
-        onClick={() => {
-          window.location.href = "https://google.com";
-        }}
       >
         Google
       </Button>
@@ -275,11 +251,8 @@ const EmailRegistration = ({ className = "" }) => {
           "&:hover": { background: "#eee" },
           height: 40,
         }}
-        onClick={() => {
-          window.location.href = "https://wechat.com";
-        }}
       >
-        微信
+        WeChat
       </Button>
       <Button
         className="self-stretch h-10"
@@ -295,9 +268,6 @@ const EmailRegistration = ({ className = "" }) => {
           "&:hover": { background: "#eee" },
           height: 40,
         }}
-        onClick={() => {
-          window.location.href = "https://qq.com";
-        }}
       >
         QQ
       </Button>
@@ -306,10 +276,6 @@ const EmailRegistration = ({ className = "" }) => {
       </div>
     </div>
   );
-};
-
-EmailRegistration.propTypes = {
-  className: PropTypes.string,
 };
 
 export default EmailRegistration;
