@@ -3,7 +3,7 @@ const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: 'user_register_db'
+  database: 'gotong'
 });
 
 connection.connect((err) => {
