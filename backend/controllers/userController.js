@@ -10,11 +10,15 @@ exports.register = (req, res) => {
 
   User.create({ username, password: hashedPassword, email, role }, (err, user) => {
     if (err) return res.status(500).send(err);
-    res.status(201).json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role
+
+    UserProfile.create({ id: user.id, username, email, role, password: hashedPassword }, (err) => {
+      if (err) return res.status(500).send(err);
+      res.status(201).json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      });
     });
   });
 };
@@ -81,6 +85,16 @@ exports.getUserProfile = (req, res) => {
   });
 };
 
+exports.updateUserProfile = (req, res) => {
+  const userId = req.params.id;
+  const { bio, gender, avatar_file } = req.body;
+
+  UserProfile.update(userId, { bio, gender, avatar_file }, (err, result) => {
+    if (err) return res.status(500).send(err);
+    res.send('User profile updated successfully');
+  });
+};
+
 exports.testConnection = (req, res) => {
   console.log('Received test-connection request');
   db.query('SELECT 1 + 1 AS solution', (err, results) => {
@@ -91,4 +105,36 @@ exports.testConnection = (req, res) => {
     console.log('Database query successful', results);
     res.send(`Database connection successful: ${results[0].solution}`);
   });
+};
+
+exports.verifyToken = (req, res) => {
+  const token = req.query.token;
+  if (!token) {
+    return res.status(400).send('Token is required');
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({ valid: true, decoded });
+  } catch (error) {
+    res.status(400).send('Invalid token');
+  }
+};
+
+exports.refreshToken = (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).send('Token is required');
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+    console.log('Decoded token for refresh:', decoded);
+    const newToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
+    console.log('New token generated:', newToken);
+    res.json({ token: newToken });
+  } catch (error) {
+    console.error('Error refreshing token:', error.message);
+    res.status(400).send(`Invalid token: ${error.message}`);
+  }
 };
