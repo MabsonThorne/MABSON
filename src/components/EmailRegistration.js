@@ -42,7 +42,10 @@ const EmailRegistration = ({ className = "" }) => {
       window.location.href = "http://106.52.158.123:3000";
     } catch (error) {
       console.error("Login failed:", error);
-      alert("Invalid email or password. Please try again.");
+      if (error.response && error.response.status === 401) {
+        alert("Invalid email or password. Please try again.");
+        setIsRegister(true); // 自动跳转到注册模式
+      }
     }
   };
 
@@ -210,25 +213,6 @@ const EmailRegistration = ({ className = "" }) => {
             }}
           >
             {isRegister ? "注册" : "登录"}
-          </Button>
-        )}
-        {!isEmailChecked && (
-          <Button
-            className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
-            disableElevation
-            variant="contained"
-            onClick={handleLogin}
-            sx={{
-              textTransform: "none",
-              color: "#fff",
-              fontSize: "16",
-              background: "#ff0000",
-              borderRadius: "8px",
-              "&:hover": { background: "#ff0000" },
-              height: 40,
-            }}
-          >
-            登录
           </Button>
         )}
       </div>
