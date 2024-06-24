@@ -12,10 +12,12 @@ const EmailRegistration = ({ className = "" }) => {
   const [isRegister, setIsRegister] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(true);
   const [isEmailChecked, setIsEmailChecked] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
 
   const handleEmailChange = (event) => {
     setEmail(event.target.value);
     setIsEmailValid(/\S+@\S+\.\S+/.test(event.target.value));
+    setIsEmailChecked(false);
   };
 
   const handleEmailBlur = async () => {
@@ -25,8 +27,10 @@ const EmailRegistration = ({ className = "" }) => {
       const response = await axios.post("http://106.52.158.123:5000/api/check-email", { email });
       if (response.data.exists) {
         setIsRegister(false);
+        setEmailExists(true);
       } else {
         setIsRegister(true);
+        setEmailExists(false);
       }
       setIsEmailChecked(true);
     } catch (error) {
@@ -35,13 +39,18 @@ const EmailRegistration = ({ className = "" }) => {
   };
 
   const handleLogin = async () => {
+    if (!emailExists) {
+      setIsRegister(true);
+      return;
+    }
+
     try {
       const response = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
       localStorage.setItem("token", response.data.token);
       window.location.href = "http://106.52.158.123:3000";
     } catch (error) {
       console.error("Login failed:", error);
-      alert("Invalid email or password. Please try again.");
+      alert('Invalid email or password. Please try again.');
     }
   };
 
@@ -96,7 +105,7 @@ const EmailRegistration = ({ className = "" }) => {
           error={!isEmailValid}
           helperText={!isEmailValid ? "请输入有效的邮箱" : ""}
         />
-        {isEmailChecked && !isRegister && (
+        {isEmailChecked && emailExists && (
           <TextField
             className="[border:none] bg-[transparent] self-stretch h-10 font-small-text font-medium text-xl text-gray"
             placeholder="请输入密码"
@@ -207,25 +216,6 @@ const EmailRegistration = ({ className = "" }) => {
             }}
           >
             {isRegister ? "注册" : "登录"}
-          </Button>
-        )}
-        {!isEmailChecked && (
-          <Button
-            className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
-            disableElevation
-            variant="contained"
-            onClick={handleLogin}
-            sx={{
-              textTransform: "none",
-              color: "#fff",
-              fontSize: "16",
-              background: "#ff0000",
-              borderRadius: "8px",
-              "&:hover": { background: "#ff0000" },
-              height: 40,
-            }}
-          >
-            登录
           </Button>
         )}
       </div>
