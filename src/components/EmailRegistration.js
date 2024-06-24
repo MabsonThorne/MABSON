@@ -41,9 +41,7 @@ const EmailRegistration = ({ className = "" }) => {
       window.location.href = "http://106.52.158.123:3000";
     } catch (error) {
       console.error("Login failed:", error);
-      if (error.response && error.response.status === 401) {
-        alert('Invalid email or password');
-      }
+      alert("Invalid email or password. Please try again.");
     }
   };
 
