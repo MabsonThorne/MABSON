@@ -11,16 +11,38 @@ const FrameComponent2 = memo(({ className = "" }) => {
 
   const checkLoginStatus = useCallback(() => {
     const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token); // 如果token存在，则isLoggedIn为true
+    if (token) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
+
+  const handleInvalidToken = useCallback(() => {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
   }, []);
 
   useEffect(() => {
     checkLoginStatus();
-  }, [checkLoginStatus]);
+
+    // Token validation example (depends on your implementation)
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch('http://106.52.158.123:5000/api/verify-token?token=' + token)
+        .then(response => response.json())
+        .then(data => {
+          if (!data.valid) {
+            handleInvalidToken();
+          }
+        })
+        .catch(handleInvalidToken);
+    }
+  }, [checkLoginStatus, handleInvalidToken]);
 
   const onButtonClick = useCallback(() => {
     if (isLoggedIn) {
-      window.location.href = 'http://106.52.158.123:3000/7';
+      window.location.href = 'http://106.52.158.123:3000/6';
     } else {
       window.location.href = 'http://106.52.158.123:3000/4';
     }
