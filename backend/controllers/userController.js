@@ -5,43 +5,28 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
 exports.register = (req, res) => {
-  const { username, email, password, role } = req.body;
+  const { username, password, email, role } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-  User.findByEmail(email, (err, user) => {
-    if (err) {
-      console.error('Error finding user by email:', err);
-      return res.status(500).send(err);
-    }
-    if (user) {
-      return res.status(400).send('Email already exists');
-    }
+  // Check for existing email or username
+  User.findByEmail(email, (err, existingUser) => {
+    if (err) return res.status(500).send(err);
+    if (existingUser) return res.status(409).send('Email already in use');
 
-    User.findByUsername(username, (err, user) => {
-      if (err) {
-        console.error('Error finding user by username:', err);
-        return res.status(500).send(err);
-      }
-      if (user) {
-        return res.status(400).send('Username already exists');
-      }
+    User.create({ username, password: hashedPassword, email, role }, (err, user) => {
+      if (err) return res.status(500).send(err);
 
-      User.create({ username, password: hashedPassword, email, role }, (err, user) => {
+      UserProfile.create({ id: user.id, username, email, role }, (err) => {
         if (err) {
-          console.error('Error creating user:', err);
-          return res.status(500).send(err);
+          console.error('Error creating user profile:', err);
+          return res.status(500).send('Error creating user profile');
         }
-        UserProfile.create({ id: user.id, username, email, role }, (err) => {
-          if (err) {
-            console.error('Error creating user profile:', err);
-            return res.status(500).send(err);
-          }
-          res.status(201).json({
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            role: user.role
-          });
+
+        res.status(201).json({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
         });
       });
     });
@@ -52,21 +37,14 @@ exports.login = (req, res) => {
   const { email, password } = req.body;
 
   User.findByEmail(email, (err, user) => {
-    if (err) {
-      console.error('Error finding user by email:', err);
-      return res.status(500).send(err);
-    }
-    if (!user) {
-      return res.status(404).send('User not found');
-    }
+    if (err) return res.status(500).send(err);
+    if (!user) return res.status(404).send('User not found');
 
     const isValidPassword = bcrypt.compareSync(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).send('Invalid password');
-    }
+    if (!isValidPassword) return res.status(401).send('Invalid password');
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
+      expiresIn: '1d',
     });
 
     res.json({ token, user: { id: user.id, username: user.username, email: user.email, role: user.role } });
@@ -77,10 +55,7 @@ exports.checkEmail = (req, res) => {
   const { email } = req.body;
 
   User.findByEmail(email, (err, user) => {
-    if (err) {
-      console.error('Error checking email:', err);
-      return res.status(500).send(err);
-    }
+    if (err) return res.status(500).send(err);
     res.json({ exists: !!user });
   });
 };
@@ -90,43 +65,32 @@ exports.updateUserInfo = (req, res) => {
   const { avatar, bio, gender } = req.body;
 
   UserProfile.update(id, { avatar, bio, gender }, (err, result) => {
-    if (err) {
-      console.error('Error updating user info:', err);
-      return res.status(500).send(err);
-    }
+    if (err) return res.status(500).send(err);
     res.send('User information updated successfully');
   });
 };
 
 exports.getAllUsers = (req, res) => {
   User.getAll((err, users) => {
-    if (err) {
-      console.error('Error getting all users:', err);
-      return res.status(500).send(err);
-    }
+    if (err) res.status(500).send(err);
     const sanitizedUsers = users.map(user => ({
       id: user.id,
       username: user.username,
       email: user.email,
       role: user.role,
       created_at: user.created_at,
-      updated_at: user.updated_at
+      updated_at: user.updated_at,
     }));
     res.json(sanitizedUsers);
   });
 };
 
 exports.getUserProfile = (req, res) => {
-  const userId = req.params.id; // Use the user ID from the request parameters
+  const userId = req.params.id;
 
   UserProfile.findByUserId(userId, (err, userProfile) => {
-    if (err) {
-      console.error('Error getting user profile:', err);
-      return res.status(500).send(err);
-    }
-    if (!userProfile) {
-      return res.status(404).send('User profile not found');
-    }
+    if (err) return res.status(500).send(err);
+    if (!userProfile) return res.status(404).send('User profile not found');
     res.json(userProfile);
   });
 };
@@ -136,10 +100,7 @@ exports.updateUserProfile = (req, res) => {
   const { bio, gender, avatar_file } = req.body;
 
   UserProfile.update(userId, { bio, gender, avatar_file }, (err, result) => {
-    if (err) {
-      console.error('Error updating user profile:', err);
-      return res.status(500).send(err);
-    }
+    if (err) return res.status(500).send(err);
     res.send('User profile updated successfully');
   });
 };
@@ -171,16 +132,15 @@ exports.verifyToken = (req, res) => {
 };
 
 exports.refreshToken = (req, res) => {
-  const token = req.body.token;
+  const { token } = req.body;
+
   if (!token) {
     return res.status(400).send('Token is required');
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const newToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+    const newToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
     res.json({ token: newToken });
   } catch (error) {
     res.status(400).send('Invalid token');
