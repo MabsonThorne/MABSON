@@ -1,40 +1,42 @@
 const db = require('../config/db');
 
 const User = {
-  create: (userData, callback) => {
-    const { username, password, email, role } = userData;
-    db.query('INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)', [username, password, email, role], (err, results) => {
+  create: (data, callback) => {
+    const sql = 'INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)';
+    db.query(sql, [data.username, data.password, data.email, data.role], (err, results) => {
       if (err) return callback(err);
-      const userId = results.insertId;
-      db.query('INSERT INTO user_profiles (user_id, username, email, role) VALUES (?, ?, ?, ?)', [userId, username, email, role], (err) => {
-        if (err) return callback(err);
-        callback(null, { id: userId, username, email, role });
-      });
+      User.findById(results.insertId, callback);
     });
   },
-
   findByEmail: (email, callback) => {
-    db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
+    const sql = 'SELECT * FROM users WHERE email = ?';
+    db.query(sql, [email], (err, results) => {
       if (err) return callback(err);
       callback(null, results[0]);
     });
   },
-
   findById: (id, callback) => {
-    db.query('SELECT * FROM user_profiles WHERE user_id = ?', [id], (err, results) => {
+    const sql = 'SELECT * FROM users WHERE id = ?';
+    db.query(sql, [id], (err, results) => {
       if (err) return callback(err);
       callback(null, results[0]);
     });
   },
-
-  updateInfo: (id, data, callback) => {
-    const { avatar, bio } = data;
-    db.query('UPDATE user_profiles SET avatar = ?, bio = ? WHERE user_id = ?', [avatar, bio, id], callback);
+  findByUsername: (username, callback) => {
+    const sql = 'SELECT * FROM users WHERE username = ?';
+    db.query(sql, [username], (err, results) => {
+      if (err) return callback(err);
+      callback(null, results[0]);
+    });
   },
-
   getAll: (callback) => {
-    db.query('SELECT * FROM user_profiles', callback);
+    const sql = 'SELECT * FROM users';
+    db.query(sql, callback);
   },
+  updateInfo: (id, data, callback) => {
+    const sql = 'UPDATE users SET avatar = ?, bio = ? WHERE id = ?';
+    db.query(sql, [data.avatar, data.bio, id], callback);
+  }
 };
 
 module.exports = User;
