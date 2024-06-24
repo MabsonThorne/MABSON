@@ -1,3 +1,4 @@
+// userController.js
 const User = require('../models/user');
 const UserProfile = require('../models/userProfile');
 const bcrypt = require('bcrypt');
@@ -5,14 +6,19 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
 exports.register = (req, res) => {
-  const { username, password, email, role } = req.body;
+  const { username, email, password, role } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   User.create({ username, password: hashedPassword, email, role }, (err, user) => {
-    if (err) return res.status(500).send(err);
-
-    UserProfile.create({ id: user.id, username, email, role, password: hashedPassword }, (err) => {
-      if (err) return res.status(500).send(err);
+    if (err) {
+      console.error('Error creating user:', err);
+      return res.status(500).send(err);
+    }
+    UserProfile.create({ id: user.id, username, email, role }, (err) => {
+      if (err) {
+        console.error('Error creating user profile:', err);
+        return res.status(500).send(err);
+      }
       res.status(201).json({
         id: user.id,
         username: user.username,
@@ -27,11 +33,18 @@ exports.login = (req, res) => {
   const { email, password } = req.body;
 
   User.findByEmail(email, (err, user) => {
-    if (err) return res.status(500).send(err);
-    if (!user) return res.status(404).send('User not found');
+    if (err) {
+      console.error('Error finding user by email:', err);
+      return res.status(500).send(err);
+    }
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
 
     const isValidPassword = bcrypt.compareSync(password, user.password);
-    if (!isValidPassword) return res.status(401).send('Invalid password');
+    if (!isValidPassword) {
+      return res.status(401).send('Invalid password');
+    }
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: '1h',
@@ -45,7 +58,10 @@ exports.checkEmail = (req, res) => {
   const { email } = req.body;
 
   User.findByEmail(email, (err, user) => {
-    if (err) return res.status(500).send(err);
+    if (err) {
+      console.error('Error checking email:', err);
+      return res.status(500).send(err);
+    }
     res.json({ exists: !!user });
   });
 };
@@ -55,14 +71,20 @@ exports.updateUserInfo = (req, res) => {
   const { avatar, bio, gender } = req.body;
 
   UserProfile.update(id, { avatar, bio, gender }, (err, result) => {
-    if (err) return res.status(500).send(err);
+    if (err) {
+      console.error('Error updating user info:', err);
+      return res.status(500).send(err);
+    }
     res.send('User information updated successfully');
   });
 };
 
 exports.getAllUsers = (req, res) => {
   User.getAll((err, users) => {
-    if (err) res.status(500).send(err);
+    if (err) {
+      console.error('Error getting all users:', err);
+      return res.status(500).send(err);
+    }
     const sanitizedUsers = users.map(user => ({
       id: user.id,
       username: user.username,
@@ -76,11 +98,16 @@ exports.getAllUsers = (req, res) => {
 };
 
 exports.getUserProfile = (req, res) => {
-  const userId = req.params.id;
+  const userId = req.user.id; // 使用 req.user.id 获取用户 ID
 
   UserProfile.findByUserId(userId, (err, userProfile) => {
-    if (err) return res.status(500).send(err);
-    if (!userProfile) return res.status(404).send('User profile not found');
+    if (err) {
+      console.error('Error getting user profile:', err);
+      return res.status(500).send(err);
+    }
+    if (!userProfile) {
+      return res.status(404).send('User profile not found');
+    }
     res.json(userProfile);
   });
 };
@@ -90,7 +117,10 @@ exports.updateUserProfile = (req, res) => {
   const { bio, gender, avatar_file } = req.body;
 
   UserProfile.update(userId, { bio, gender, avatar_file }, (err, result) => {
-    if (err) return res.status(500).send(err);
+    if (err) {
+      console.error('Error updating user profile:', err);
+      return res.status(500).send(err);
+    }
     res.send('User profile updated successfully');
   });
 };
@@ -118,23 +148,5 @@ exports.verifyToken = (req, res) => {
     res.json({ valid: true, decoded });
   } catch (error) {
     res.status(400).send('Invalid token');
-  }
-};
-
-exports.refreshToken = (req, res) => {
-  const { token } = req.body;
-  if (!token) return res.status(400).send('Token is required');
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
-    console.log('Decoded token for refresh:', decoded);
-    const newToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
-    console.log('New token generated:', newToken);
-    res.json({ token: newToken });
-  } catch (error) {
-    console.error('Error refreshing token:', error.message);
-    res.status(400).send(`Invalid token: ${error.message}`);
   }
 };
