@@ -1,4 +1,3 @@
-// userController.js
 const User = require('../models/user');
 const UserProfile = require('../models/userProfile');
 const bcrypt = require('bcrypt');
@@ -9,21 +8,41 @@ exports.register = (req, res) => {
   const { username, email, password, role } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-  User.create({ username, password: hashedPassword, email, role }, (err, user) => {
+  User.findByEmail(email, (err, user) => {
     if (err) {
-      console.error('Error creating user:', err);
+      console.error('Error finding user by email:', err);
       return res.status(500).send(err);
     }
-    UserProfile.create({ id: user.id, username, email, role }, (err) => {
+    if (user) {
+      return res.status(400).send('Email already exists');
+    }
+
+    User.findByUsername(username, (err, user) => {
       if (err) {
-        console.error('Error creating user profile:', err);
+        console.error('Error finding user by username:', err);
         return res.status(500).send(err);
       }
-      res.status(201).json({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role
+      if (user) {
+        return res.status(400).send('Username already exists');
+      }
+
+      User.create({ username, password: hashedPassword, email, role }, (err, user) => {
+        if (err) {
+          console.error('Error creating user:', err);
+          return res.status(500).send(err);
+        }
+        UserProfile.create({ id: user.id, username, email, role }, (err) => {
+          if (err) {
+            console.error('Error creating user profile:', err);
+            return res.status(500).send(err);
+          }
+          res.status(201).json({
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role
+          });
+        });
       });
     });
   });
@@ -98,7 +117,7 @@ exports.getAllUsers = (req, res) => {
 };
 
 exports.getUserProfile = (req, res) => {
-  const userId = req.user.id; // 使用 req.user.id 获取用户 ID
+  const userId = req.params.id; // Use the user ID from the request parameters
 
   UserProfile.findByUserId(userId, (err, userProfile) => {
     if (err) {
@@ -146,6 +165,23 @@ exports.verifyToken = (req, res) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     res.json({ valid: true, decoded });
+  } catch (error) {
+    res.status(400).send('Invalid token');
+  }
+};
+
+exports.refreshToken = (req, res) => {
+  const token = req.body.token;
+  if (!token) {
+    return res.status(400).send('Token is required');
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const newToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
+    res.json({ token: newToken });
   } catch (error) {
     res.status(400).send('Invalid token');
   }
