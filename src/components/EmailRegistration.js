@@ -199,25 +199,23 @@ const EmailRegistration = ({ className = "" }) => {
             </Select>
           </>
         )}
-        {isEmailChecked && (
-          <Button
-            className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
-            disableElevation
-            variant="contained"
-            onClick={isRegister ? handleRegister : handleLogin}
-            sx={{
-              textTransform: "none",
-              color: "#fff",
-              fontSize: "16",
-              background: "#ff0000",
-              borderRadius: "8px",
-              "&:hover": { background: "#ff0000" },
-              height: 40,
-            }}
-          >
-            {isRegister ? "注册" : "登录"}
-          </Button>
-        )}
+        <Button
+          className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
+          disableElevation
+          variant="contained"
+          onClick={isEmailChecked ? (isRegister ? handleRegister : handleLogin) : handleEmailBlur}
+          sx={{
+            textTransform: "none",
+            color: "#fff",
+            fontSize: "16",
+            background: "#ff0000",
+            borderRadius: "8px",
+            "&:hover": { background: "#ff0000" },
+            height: 40,
+          }}
+        >
+          {isEmailChecked ? (isRegister ? "注册" : "登录") : "下一步"}
+        </Button>
       </div>
       <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[8px]">
         <div className="flex-1 flex flex-col items-start justify-start pt-[11.5px] px-0 pb-0 box-border min-w-[104px]">
