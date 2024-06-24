@@ -31,7 +31,6 @@ const EmailRegistration = ({ className = "" }) => {
       setIsEmailChecked(true);
     } catch (error) {
       console.error("Error checking email:", error);
-      alert("Error checking email. Please try again later.");
     }
   };
 
@@ -43,8 +42,7 @@ const EmailRegistration = ({ className = "" }) => {
     } catch (error) {
       console.error("Login failed:", error);
       if (error.response && error.response.status === 401) {
-        alert("Invalid email or password. Please try again.");
-        setIsRegister(true); // 自动跳转到注册模式
+        alert('Invalid email or password');
       }
     }
   };
@@ -57,11 +55,9 @@ const EmailRegistration = ({ className = "" }) => {
 
     try {
       const response = await axios.post("http://106.52.158.123:5000/api/register", { username, email, password, role });
-      alert("User registered successfully!");
       window.location.href = `http://106.52.158.123:3000/2/${response.data.id}`;
     } catch (error) {
       console.error("Registration failed:", error);
-      alert("Error during registration. Please try again later.");
     }
   };
 
