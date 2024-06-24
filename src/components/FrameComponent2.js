@@ -11,11 +11,7 @@ const FrameComponent2 = memo(({ className = "" }) => {
 
   const checkLoginStatus = useCallback(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
+    setIsLoggedIn(!!token); // 如果token存在，则isLoggedIn为true
   }, []);
 
   useEffect(() => {
@@ -24,7 +20,7 @@ const FrameComponent2 = memo(({ className = "" }) => {
 
   const onButtonClick = useCallback(() => {
     if (isLoggedIn) {
-      window.location.href = 'http://106.52.158.123:3000/6';
+      window.location.href = 'http://106.52.158.123:3000/7';
     } else {
       window.location.href = 'http://106.52.158.123:3000/4';
     }
