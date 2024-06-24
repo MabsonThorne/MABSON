@@ -8,22 +8,49 @@ const FrameComponent4 = ({ className = "" }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
-        const response = await axios.get('http://106.52.158.123:5000/api/profile', { // 更新为5000端口
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUserProfile(response.data);
-        setIsLoggedIn(true);
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('No token found in localStorage');
+        return;
       }
-    };
 
+      console.log('Fetching user profile with token:', token);
+      const response = await axios.get('http://106.52.158.123:5000/api/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserProfile(response.data);
+      setIsLoggedIn(true);
+      console.log('User profile fetched successfully:', response.data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      if (error.response && error.response.status === 400 && error.response.data.includes('Invalid token')) {
+        try {
+          console.log('Token expired, attempting to refresh token.');
+          const token = localStorage.getItem('token'); // 确保令牌已正确获取
+          if (!token) {
+            console.error('No token found in localStorage');
+            return;
+          }
+          const refreshTokenResponse = await axios.post('http://106.52.158.123:5000/api/refresh-token', { token });
+          const newToken = refreshTokenResponse.data.token;
+          localStorage.setItem('token', newToken);
+          console.log('Token refreshed successfully:', newToken);
+          const retryResponse = await axios.get('http://106.52.158.123:5000/api/profile', {
+            headers: { Authorization: `Bearer ${newToken}` }
+          });
+          setUserProfile(retryResponse.data);
+          setIsLoggedIn(true);
+          console.log('User profile fetched successfully with new token:', retryResponse.data);
+        } catch (refreshError) {
+          console.error('Error refreshing token:', refreshError.message);
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
     fetchUserProfile();
   }, []);
 
@@ -40,16 +67,28 @@ const FrameComponent4 = ({ className = "" }) => {
   }, [navigate]);
 
   const onButtonContainerClick = useCallback(() => {
-    navigate("/");
-  }, [navigate]);
-
-  const onButtonContainerClick1 = useCallback(() => {
     if (isLoggedIn) {
-      navigate("/3");
+      navigate("/5");
     } else {
       navigate("/4");
     }
   }, [isLoggedIn, navigate]);
+
+  const onButtonContainerClick1 = useCallback(() => {
+    if (isLoggedIn) {
+      localStorage.removeItem('token');
+      setIsLoggedIn(false);
+      navigate("/4");
+    } else {
+      navigate("/4");
+    }
+  }, [isLoggedIn, navigate]);
+
+  const onAvatarClick = useCallback(() => {
+    if (userProfile) {
+      navigate(`/3/${userProfile.id}`);
+    }
+  }, [navigate, userProfile]);
 
   return (
     <header
@@ -107,14 +146,15 @@ const FrameComponent4 = ({ className = "" }) => {
           className="shadow-none rounded-lg bg-red flex items-center justify-center py-2.5 px-8 cursor-pointer hover:shadow-md"
           onClick={onButtonContainerClick1}
         >
-          <div className="text-white">个人</div>
+          <div className="text-white">{isLoggedIn ? "登出" : "个人"}</div>
         </div>
         <div className="flex items-center justify-start pt-1.5">
           {isLoggedIn && userProfile ? (
             <img
-              className="h-10 w-10 rounded-full object-cover"
+              className="h-10 w-10 rounded-full object-cover cursor-pointer"
               src={userProfile.avatar_file || "/path/to/default-avatar.png"}
               alt="User Avatar"
+              onClick={onAvatarClick}
             />
           ) : (
             <select className="h-10 bg-transparent border-none">
