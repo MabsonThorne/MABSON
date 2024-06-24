@@ -12,26 +12,16 @@ const EmailRegistration = ({ className = "" }) => {
   const [isRegister, setIsRegister] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(true);
   const [isEmailChecked, setIsEmailChecked] = useState(false);
-  const [emailExists, setEmailExists] = useState(false);
 
   const handleEmailChange = (event) => {
     setEmail(event.target.value);
     setIsEmailValid(/\S+@\S+\.\S+/.test(event.target.value));
-    setIsEmailChecked(false);
   };
 
-  const handleEmailBlur = async () => {
-    if (!isEmailValid) return;
-
+  const checkEmail = async () => {
     try {
       const response = await axios.post("http://106.52.158.123:5000/api/check-email", { email });
-      if (response.data.exists) {
-        setIsRegister(false);
-        setEmailExists(true);
-      } else {
-        setIsRegister(true);
-        setEmailExists(false);
-      }
+      setIsRegister(!response.data.exists);
       setIsEmailChecked(true);
     } catch (error) {
       console.error("Error checking email:", error);
@@ -39,18 +29,17 @@ const EmailRegistration = ({ className = "" }) => {
   };
 
   const handleLogin = async () => {
-    if (!emailExists) {
-      setIsRegister(true);
-      return;
+    if (!isEmailChecked) {
+      await checkEmail();
     }
-
-    try {
-      const response = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
-      localStorage.setItem("token", response.data.token);
-      window.location.href = "http://106.52.158.123:3000";
-    } catch (error) {
-      console.error("Login failed:", error);
-      alert('Invalid email or password. Please try again.');
+    if (!isRegister) {
+      try {
+        const response = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
+        localStorage.setItem("token", response.data.token);
+        window.location.href = "http://106.52.158.123:3000";
+      } catch (error) {
+        console.error("Login failed:", error);
+      }
     }
   };
 
@@ -59,12 +48,22 @@ const EmailRegistration = ({ className = "" }) => {
       alert("Passwords do not match");
       return;
     }
-
     try {
       const response = await axios.post("http://106.52.158.123:5000/api/register", { username, email, password, role });
       window.location.href = `http://106.52.158.123:3000/2/${response.data.id}`;
     } catch (error) {
       console.error("Registration failed:", error);
+    }
+  };
+
+  const handleButtonClick = async () => {
+    if (!isEmailChecked) {
+      await checkEmail();
+    }
+    if (isRegister) {
+      handleRegister();
+    } else {
+      handleLogin();
     }
   };
 
@@ -91,7 +90,6 @@ const EmailRegistration = ({ className = "" }) => {
           variant="outlined"
           value={email}
           onChange={handleEmailChange}
-          onBlur={handleEmailBlur}
           sx={{
             "& fieldset": { borderColor: "#e0e0e0" },
             "& .MuiInputBase-root": {
@@ -105,7 +103,7 @@ const EmailRegistration = ({ className = "" }) => {
           error={!isEmailValid}
           helperText={!isEmailValid ? "请输入有效的邮箱" : ""}
         />
-        {isEmailChecked && emailExists && (
+        {isEmailChecked && !isRegister && (
           <TextField
             className="[border:none] bg-[transparent] self-stretch h-10 font-small-text font-medium text-xl text-gray"
             placeholder="请输入密码"
@@ -203,7 +201,7 @@ const EmailRegistration = ({ className = "" }) => {
           className="self-stretch h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
           disableElevation
           variant="contained"
-          onClick={isEmailChecked ? (isRegister ? handleRegister : handleLogin) : handleEmailBlur}
+          onClick={handleButtonClick}
           sx={{
             textTransform: "none",
             color: "#fff",
