@@ -59,9 +59,7 @@ const EmailRegistration = ({ className = "" }) => {
   };
 
   return (
-    <div
-      className={`w-[400px] flex flex-col items-start justify-start gap-[24px] max-w-full text-center text-base text-gray font-small-text ${className}`}
-    >
+    <div className={`w-[400px] flex flex-col items-start justify-start gap-[24px] max-w-full text-center text-base text-gray font-small-text ${className}`}>
       <div className="self-stretch flex flex-row items-start justify-center py-0 px-5 text-5xl text-black">
         <div className="flex flex-col items-start justify-start gap-[4px]">
           <div className="flex flex-row items-start justify-start py-0 px-8">
