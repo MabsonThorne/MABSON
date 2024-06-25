@@ -4,75 +4,88 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
-exports.register = (req, res) => {
+exports.register = async (req, res) => {
   const { username, password, email, role } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-  // Check for existing email or username
-  User.findByEmail(email, (err, existingUser) => {
-    if (err) return res.status(500).send(err);
-    if (existingUser) return res.status(409).send('Email already in use');
+  try {
+    const [existingUser] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
 
-    User.create({ username, password: hashedPassword, email, role }, (err, user) => {
-      if (err) return res.status(500).send(err);
+    if (existingUser.length > 0) {
+      return res.status(409).send('Email already in use');
+    }
 
-      UserProfile.create({ id: user.id, username, email, role }, (err) => {
-        if (err) {
-          console.error('Error creating user profile:', err);
-          return res.status(500).send('Error creating user profile');
-        }
+    const [result] = await db.query('INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)', [username, hashedPassword, email, role]);
+    const userId = result.insertId;
 
-        res.status(201).json({
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        });
-      });
+    res.status(201).json({
+      id: userId,
+      username: username,
+      email: email,
+      role: role,
     });
-  });
+  } catch (err) {
+    console.error('Error registering user:', err);
+    res.status(500).send('Error registering user');
+  }
 };
 
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
   const { email, password } = req.body;
 
-  User.findByEmail(email, (err, user) => {
-    if (err) return res.status(500).send(err);
-    if (!user) return res.status(404).send('User not found');
+  try {
+    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    const user = users[0];
+
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
 
     const isValidPassword = bcrypt.compareSync(password, user.password);
-    if (!isValidPassword) return res.status(401).send('Invalid password');
+    if (!isValidPassword) {
+      return res.status(401).send('Invalid password');
+    }
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: '1d',
     });
 
     res.json({ token, user: { id: user.id, username: user.username, email: user.email, role: user.role } });
-  });
+  } catch (err) {
+    console.error('Error logging in:', err);
+    res.status(500).send('Error logging in');
+  }
 };
 
-exports.checkEmail = (req, res) => {
+exports.checkEmail = async (req, res) => {
   const { email } = req.body;
 
-  User.findByEmail(email, (err, user) => {
-    if (err) return res.status(500).send(err);
-    res.json({ exists: !!user });
-  });
+  try {
+    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    const exists = users.length > 0;
+    res.json({ exists });
+  } catch (err) {
+    console.error('Error checking email:', err);
+    res.status(500).send('Error checking email');
+  }
 };
 
-exports.updateUserInfo = (req, res) => {
+exports.updateUserInfo = async (req, res) => {
   const { id } = req.user;
   const { avatar, bio, gender } = req.body;
 
-  UserProfile.update(id, { avatar, bio, gender }, (err, result) => {
-    if (err) return res.status(500).send(err);
+  try {
+    await db.query('UPDATE user_profiles SET avatar = ?, bio = ?, gender = ? WHERE id = ?', [avatar, bio, gender, id]);
     res.send('User information updated successfully');
-  });
+  } catch (err) {
+    console.error('Error updating user information:', err);
+    res.status(500).send('Error updating user information');
+  }
 };
 
-exports.getAllUsers = (req, res) => {
-  User.getAll((err, users) => {
-    if (err) res.status(500).send(err);
+exports.getAllUsers = async (req, res) => {
+  try {
+    const [users] = await db.query('SELECT * FROM users');
     const sanitizedUsers = users.map(user => ({
       id: user.id,
       username: user.username,
@@ -82,27 +95,40 @@ exports.getAllUsers = (req, res) => {
       updated_at: user.updated_at,
     }));
     res.json(sanitizedUsers);
-  });
+  } catch (err) {
+    console.error('Error getting all users:', err);
+    res.status(500).send('Error getting all users');
+  }
 };
 
-exports.getUserProfile = (req, res) => {
-  const userId = req.params.id;
+exports.getUserProfile = async (req, res) => {
+  const userId = req.user.id; // 确保使用的是认证后的用户 ID
 
-  UserProfile.findByUserId(userId, (err, userProfile) => {
-    if (err) return res.status(500).send(err);
-    if (!userProfile) return res.status(404).send('User profile not found');
-    res.json(userProfile);
-  });
+  try {
+    const [rows] = await db.query('SELECT * FROM user_profiles WHERE id = ?', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).send('User profile not found');
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).send(error);
+  }
 };
 
-exports.updateUserProfile = (req, res) => {
-  const userId = req.params.id;
+exports.updateUserProfile = async (req, res) => {
+  const userId = req.params.id; // 确保使用的是正确的用户 ID
   const { bio, gender, avatar_file } = req.body;
 
-  UserProfile.update(userId, { bio, gender, avatar_file }, (err, result) => {
-    if (err) return res.status(500).send(err);
+  try {
+    const [result] = await db.query('UPDATE user_profiles SET bio = ?, gender = ?, avatar_file = ? WHERE id = ?', [bio, gender, avatar_file, userId]);
+    if (result.affectedRows === 0) {
+      return res.status(404).send('User profile not found');
+      }
     res.send('User profile updated successfully');
-  });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).send('Error updating user profile');
+  }
 };
 
 exports.testConnection = (req, res) => {
