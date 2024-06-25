@@ -1,4 +1,3 @@
-const User = require('../models/user');
 const UserProfile = require('../models/userProfile');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -70,19 +69,6 @@ exports.checkEmail = async (req, res) => {
   }
 };
 
-exports.updateUserInfo = async (req, res) => {
-  const { id } = req.user;
-  const { avatar, bio, gender } = req.body;
-
-  try {
-    await db.query('UPDATE user_profiles SET avatar = ?, bio = ?, gender = ? WHERE id = ?', [avatar, bio, gender, id]);
-    res.send('User information updated successfully');
-  } catch (err) {
-    console.error('Error updating user information:', err);
-    res.status(500).send('Error updating user information');
-  }
-};
-
 exports.getAllUsers = async (req, res) => {
   try {
     const [users] = await db.query('SELECT * FROM users');
@@ -111,19 +97,40 @@ exports.getUserProfile = async (req, res) => {
     }
     res.json(rows[0]);
   } catch (error) {
-    res.status(500).send(error);
+    console.error('Error fetching user profile:', error);
+    res.status(500).send('Error fetching user profile');
+  }
+};
+
+exports.getUserProfileById = async (req, res) => {
+  const userId = req.params.id; // 使用URL中的用户ID
+
+  try {
+    const [rows] = await db.query('SELECT * FROM user_profiles WHERE id = ?', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).send('User profile not found');
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error fetching user profile by ID:', error);
+    res.status(500).send('Error fetching user profile by ID');
   }
 };
 
 exports.updateUserProfile = async (req, res) => {
-  const userId = req.params.id; // 确保使用的是正确的用户 ID
-  const { bio, gender, avatar_file } = req.body;
+  const userId = req.params.id; // 使用URL中的用户ID
+  const { bio, gender, birthdate } = req.body;
+  let avatarFile;
+
+  if (req.files && req.files.avatar_file) {
+    avatarFile = req.files.avatar_file[0].filename;
+  }
 
   try {
-    const [result] = await db.query('UPDATE user_profiles SET bio = ?, gender = ?, avatar_file = ? WHERE id = ?', [bio, gender, avatar_file, userId]);
+    const [result] = await db.query('UPDATE user_profiles SET bio = ?, gender = ?, birthdate = ?, avatar_file = ? WHERE id = ?', [bio, gender, birthdate, avatarFile, userId]);
     if (result.affectedRows === 0) {
       return res.status(404).send('User profile not found');
-      }
+    }
     res.send('User profile updated successfully');
   } catch (error) {
     console.error('Error updating user profile:', error);
