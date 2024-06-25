@@ -1,94 +1,91 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import PropTypes from "prop-types";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import imageCompression from 'browser-image-compression';
 import { FaMale, FaFemale } from "react-icons/fa";
 
-const FrameComponent5 = ({ className = "" }) => {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const [userProfile, setUserProfile] = useState(null);
-  const [bio, setBio] = useState('');
-  const [gender, setGender] = useState('');
+const FrameComponent5 = ({ userId }) => {
   const [avatar, setAvatar] = useState(null);
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [birthdate, setBirthdate] = useState('');
-  const [description, setDescription] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [bio, setBio] = useState("");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [birthdate, setBirthdate] = useState("");
+  const [gender, setGender] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchPublicUserProfile = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
-        const response = await axios.get(`http://106.52.158.123:5000/api/profile/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUserProfile(response.data);
-        setBio(response.data.bio || '');
-        setGender(response.data.gender || '');
-        setUsername(response.data.username || '');
-        setEmail(response.data.email || '');
-        setBirthdate(response.data.birthdate || '');
+        const response = await axios.get(`http://106.52.158.123:5000/api/public_profile/${userId}`);
+        const data = response.data;
+        setUsername(data.username || '');
+        setEmail(data.email || '');
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('Error fetching public user profile:', error);
+        setError('Failed to fetch public user profile');
       }
     };
 
-    fetchUserProfile();
-  }, [id]);
+    if (userId) {
+      fetchPublicUserProfile();
+    }
+  }, [userId]);
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
-    setAvatar(file);
-  };
-
-  const handleBioChange = (e) => {
-    setBio(e.target.value);
-  };
-
-  const handleGenderChange = (e) => {
-    setGender(e.target.value);
-  };
-
-  const handleBirthdateChange = (e) => {
-    setBirthdate(e.target.value);
-  };
-
-  const handleSubmit = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const formData = new FormData();
-      formData.append('bio', bio);
-      formData.append('gender', gender);
-      formData.append('birthdate', birthdate);
-      formData.append('description', description);
-      if (avatar) {
-        formData.append('avatar', avatar);
+    if (file) {
+      try {
+        const compressedAvatar = await imageCompression(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 800,
+          useWebWorker: true
+        });
+        setAvatar(compressedAvatar);
+      } catch (error) {
+        console.error('Error compressing image:', error);
+        setError('Failed to compress image');
       }
+    }
+  };
 
-      await axios.post(`http://106.52.158.123:5000/api/update-profile/${id}`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+
+    if (avatar) {
+      formData.append('avatar_file', avatar);
+    }
+    formData.append('bio', bio);
+    formData.append('birthdate', birthdate);
+    formData.append('gender', gender);
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.put(`http://106.52.158.123:5000/api/user_profiles/${userId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
+        },
+        withCredentials: true
       });
-
-      setSuccess('Profile updated successfully');
-      navigate('/');
+      setSuccess("Profile updated successfully");
+      setTimeout(() => {
+        window.location.href = 'http://106.52.158.123:3000/7';
+      }, 3000);
     } catch (error) {
-      console.error('Error updating user profile:', error);
-      setError('Failed to update profile');
+      setError(error.response ? error.response.data.message : error.message);
     }
   };
 
   return (
-    <div>
+    <div className="w-full relative bg-white overflow-hidden flex flex-col items-start justify-start pt-14 px-20 pb-12 box-border gap-56 leading-normal tracking-normal text-left text-21xl text-red-200 font-small-text mq750:gap-28 mq750:px-10 mq450:gap-14">
       <section className="w-[1249px] flex flex-row items-start justify-center pt-0 px-0 pb-[166px] box-border gap-[109px] max-w-full text-left text-21xl text-gray-100 font-small-text mq750:gap-[54px] mq1050:pb-[108px] mq1050:box-border mq450:gap-[27px] mq450:pb-[70px] mq450:box-border mq1125:flex-wrap">
-        <div className="relative h-[613px] flex-1 rounded-xl max-w-full min-w-[406px] overflow-hidden">
-          <label htmlFor="avatar-upload" className="cursor-pointer flex items-center justify-center h-full w-full bg-gray-300 rounded-xl">
+        <div className="relative h-[613px] flex-1 rounded-xl max-w-full min-w-[406px] overflow-hidden bg-gray-200">
+          <label
+            htmlFor="avatar-upload"
+            className="cursor-pointer flex items-center justify-center h-full w-full rounded-xl border border-black hover:shadow-lg"
+          >
             {avatar ? (
               <img
                 className="absolute inset-0 w-full h-full object-cover rounded-xl"
@@ -116,7 +113,7 @@ const FrameComponent5 = ({ className = "" }) => {
               className="self-stretch relative text-5xl leading-[150%] font-normal"
               placeholder="简介"
               value={bio}
-              onChange={handleBioChange}
+              onChange={(e) => setBio(e.target.value)}
             />
             <div className="self-stretch h-[60px] relative text-xl leading-[150%] font-medium flex items-center mq450:text-base mq450:leading-[24px]">
               <span className="[line-break:anywhere]">
@@ -129,7 +126,7 @@ const FrameComponent5 = ({ className = "" }) => {
                 <input
                   type="date"
                   value={birthdate}
-                  onChange={handleBirthdateChange}
+                  onChange={(e) => setBirthdate(e.target.value)}
                   className="ml-2"
                 />
               </span>
@@ -144,7 +141,7 @@ const FrameComponent5 = ({ className = "" }) => {
                     name="gender"
                     value="male"
                     checked={gender === 'male'}
-                    onChange={handleGenderChange}
+                    onChange={(e) => setGender(e.target.value)}
                     className="mr-1"
                   />
                   <label htmlFor="male" className="mr-4 flex items-center">
@@ -156,7 +153,7 @@ const FrameComponent5 = ({ className = "" }) => {
                     name="gender"
                     value="female"
                     checked={gender === 'female'}
-                    onChange={handleGenderChange}
+                    onChange={(e) => setGender(e.target.value)}
                     className="mr-1"
                   />
                   <label htmlFor="female" className="flex items-center">
@@ -168,10 +165,20 @@ const FrameComponent5 = ({ className = "" }) => {
             {error && <div className="text-red-500">{error}</div>}
             {success && <div className="text-green-500">{success}</div>}
             <button
-              className="cursor-pointer border-none py-3.5 px-10 bg-red-500 shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] rounded-lg flex flex-row items-start justify-start hover:bg-red-400"
+              className="cursor-pointer py-3.5 text-white rounded-lg"
               onClick={handleSubmit}
+              style={{
+                width: '100%',
+                textAlign: 'center',
+                border: 'none',
+                backgroundColor: 'red',
+                boxShadow: 'none',
+                transition: 'box-shadow 0.3s ease-in-out'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0px 8px 15px rgba(0, 0, 0, 0.3)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
             >
-              <b className="m-0 relative text-inherit leading-[150%] font-medium font-inherit inline-block min-w-[72px] mq1050:text-10xl mq1050:leading-[43px] mq450:text-3xl mq450:leading-[32px]">
+              <b className="text-lg font-semibold block">
                 完成
               </b>
             </button>
@@ -180,10 +187,6 @@ const FrameComponent5 = ({ className = "" }) => {
       </section>
     </div>
   );
-};
-
-FrameComponent5.propTypes = {
-  className: PropTypes.string,
 };
 
 export default FrameComponent5;
