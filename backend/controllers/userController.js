@@ -193,3 +193,19 @@ exports.getPublicUserProfile = async (req, res) => {
     res.status(500).send('Error fetching public user profile');
   }
 };
+
+exports.updateUserProfileWithoutAuth = async (req, res) => {
+  const userId = req.params.id;
+  const { bio, gender, avatar_file } = req.body;
+
+  try {
+    const [result] = await db.query('UPDATE user_profiles SET bio = ?, gender = ?, avatar_file = ? WHERE id = ?', [bio, gender, avatar_file, userId]);
+    if (result.affectedRows === 0) {
+      return res.status(404).send('User profile not found');
+    }
+    res.send('User profile updated successfully');
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).send('Error updating user profile');
+  }
+};
