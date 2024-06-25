@@ -85,21 +85,7 @@ const FrameComponent5 = ({ className = "" }) => {
   };
 
   return (
-    <div className={`w-full relative bg-white overflow-hidden flex flex-col items-start justify-start pt-14 px-20 pb-12 box-border gap-56 leading-normal tracking-normal text-left text-21xl text-red-200 font-small-text mq750:gap-28 mq750:px-10 mq450:gap-14 ${className}`}>
-      <div className="self-stretch flex flex-row items-start justify-center py-0 px-10 mq450:px-5">
-        <div className="w-44 flex flex-row items-start justify-start relative">
-          <img
-            className="h-24 w-50 absolute top-[-19px] left-[-42px] object-cover"
-            loading="lazy"
-            alt=""
-            src="/logo1-1@2x.png"
-          />
-          <h1 className="m-0 flex-1 relative text-inherit leading-[120px] font-normal z-1 mq1050:text-13xl mq1050:leading-12 mq450:text-5xl mq450:leading-9">
-            <span>GO</span>
-            <span className="text-text-primary">TONG</span>
-          </h1>
-        </div>
-      </div>
+    <div>
       <section className="w-[1249px] flex flex-row items-start justify-center pt-0 px-0 pb-[166px] box-border gap-[109px] max-w-full text-left text-21xl text-gray-100 font-small-text mq750:gap-[54px] mq1050:pb-[108px] mq1050:box-border mq450:gap-[27px] mq450:pb-[70px] mq450:box-border mq1125:flex-wrap">
         <div className="relative h-[613px] flex-1 rounded-xl max-w-full min-w-[406px] overflow-hidden">
           <label htmlFor="avatar-upload" className="cursor-pointer flex items-center justify-center h-full w-full bg-gray-300 rounded-xl">
@@ -182,7 +168,7 @@ const FrameComponent5 = ({ className = "" }) => {
             {error && <div className="text-red-500">{error}</div>}
             {success && <div className="text-green-500">{success}</div>}
             <button
-              className="cursor-pointer border-none py-3.5 px-10 bg-red-500 text-white shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] rounded-lg flex flex-row items-start justify-center hover:bg-red-400"
+              className="cursor-pointer border-none py-3.5 px-10 bg-red-500 shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] rounded-lg flex flex-row items-start justify-start hover:bg-red-400"
               onClick={handleSubmit}
             >
               <b className="m-0 relative text-inherit leading-[150%] font-medium font-inherit inline-block min-w-[72px] mq1050:text-10xl mq1050:leading-[43px] mq450:text-3xl mq450:leading-[32px]">
