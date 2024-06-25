@@ -28,23 +28,22 @@ const EmailRegistration = ({ className = "" }) => {
     }
   };
 
-const handleLogin = async () => {
-  if (!isEmailChecked) {
-    await checkEmail();
-  }
-  if (!isRegister) {
-    try {
-      const response = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
-      const token = response.data.token;
-      console.log(`Received token: ${token}`); // 添加日志检查令牌
-      localStorage.setItem("authToken", token); // 确保存储正确的键名
-      window.location.href = "http://106.52.158.123:3000";
-    } catch (error) {
-      console.error("Login failed:", error);
+  const handleLogin = async () => {
+    if (!isEmailChecked) {
+      await checkEmail();
     }
-  }
-};
-
+    if (!isRegister) {
+      try {
+        const response = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
+        const token = response.data.token;
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("currentUser", JSON.stringify(response.data.user)); // 存储当前用户信息
+        window.location.href = "http://106.52.158.123:3000";
+      } catch (error) {
+        console.error("Login failed:", error);
+      }
+    }
+  };
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
@@ -53,7 +52,12 @@ const handleLogin = async () => {
     }
     try {
       const response = await axios.post("http://106.52.158.123:5000/api/register", { username, email, password, role });
-      window.location.href = `http://106.52.158.123:3000/2/${response.data.id}`;
+      const user = response.data;
+      const loginResponse = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
+      const token = loginResponse.data.token;
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("currentUser", JSON.stringify(loginResponse.data.user)); // 存储当前用户信息
+      window.location.href = `http://106.52.158.123:3000/2/${user.id}`;
     } catch (error) {
       console.error("Registration failed:", error);
     }
