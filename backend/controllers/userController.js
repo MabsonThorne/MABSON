@@ -88,7 +88,7 @@ exports.getAllUsers = async (req, res) => {
 };
 
 exports.getUserProfile = async (req, res) => {
-  const userId = req.user.id; // 确保使用的是认证后的用户 ID
+  const userId = req.user.id; // 使用认证后的用户 ID
 
   try {
     const [rows] = await db.query('SELECT * FROM user_profiles WHERE id = ?', [userId]);
@@ -118,16 +118,15 @@ exports.getUserProfileById = async (req, res) => {
 };
 
 exports.updateUserProfile = async (req, res) => {
-  const userId = req.params.id; // 使用URL中的用户ID
-  const { bio, gender, birthdate } = req.body;
-  let avatarFile;
+  const userId = req.params.id;
+  const { bio, gender, avatar_file } = req.body;
 
-  if (req.files && req.files.avatar_file) {
-    avatarFile = req.files.avatar_file[0].filename;
+  if (req.user.id !== parseInt(userId, 10)) {
+    return res.status(403).send('You are not authorized to update this profile');
   }
 
   try {
-    const [result] = await db.query('UPDATE user_profiles SET bio = ?, gender = ?, birthdate = ?, avatar_file = ? WHERE id = ?', [bio, gender, birthdate, avatarFile, userId]);
+    const [result] = await db.query('UPDATE user_profiles SET bio = ?, gender = ?, avatar_file = ? WHERE id = ?', [bio, gender, avatar_file, userId]);
     if (result.affectedRows === 0) {
       return res.status(404).send('User profile not found');
     }
@@ -177,5 +176,20 @@ exports.refreshToken = (req, res) => {
     res.json({ token: newToken });
   } catch (error) {
     res.status(400).send('Invalid token');
+  }
+};
+
+exports.getPublicUserProfile = async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const [rows] = await db.query('SELECT username, email FROM user_profiles WHERE id = ?', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).send('User profile not found');
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error fetching public user profile:', error);
+    res.status(500).send('Error fetching public user profile');
   }
 };
