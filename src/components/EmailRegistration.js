@@ -28,20 +28,23 @@ const EmailRegistration = ({ className = "" }) => {
     }
   };
 
-  const handleLogin = async () => {
-    if (!isEmailChecked) {
-      await checkEmail();
+const handleLogin = async () => {
+  if (!isEmailChecked) {
+    await checkEmail();
+  }
+  if (!isRegister) {
+    try {
+      const response = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
+      const token = response.data.token;
+      console.log(`Received token: ${token}`); // 添加日志检查令牌
+      localStorage.setItem("authToken", token); // 确保存储正确的键名
+      window.location.href = "http://106.52.158.123:3000";
+    } catch (error) {
+      console.error("Login failed:", error);
     }
-    if (!isRegister) {
-      try {
-        const response = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
-        localStorage.setItem("token", response.data.token);
-        window.location.href = "http://106.52.158.123:3000";
-      } catch (error) {
-        console.error("Login failed:", error);
-      }
-    }
-  };
+  }
+};
+
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
