@@ -10,7 +10,7 @@ const FrameComponent2 = memo(({ className = "" }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
+    const token = document.cookie.split('; ').find(row => row.startsWith('authToken='));
     if (token) {
       setIsLoggedIn(true);
     } else {
