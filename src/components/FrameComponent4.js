@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const FrameComponent4 = ({ className = "" }) => {
   const navigate = useNavigate();
@@ -11,12 +12,12 @@ const FrameComponent4 = ({ className = "" }) => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = Cookies.get('authToken');
         if (!token) return;
 
-        console.log('Fetching user profile with token:', token);
-        const response = await axios.get('http://106.52.158.123:5000/api/profile', {
-          headers: { Authorization: `Bearer ${token}` }
+        const response = await axios.get('http://106.52.158.123:5000/api/profile', { 
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true // 使 axios 请求携带 cookies
         });
         setUserProfile(response.data);
         setIsLoggedIn(true);
@@ -30,7 +31,7 @@ const FrameComponent4 = ({ className = "" }) => {
   }, []);
 
   const handleInvalidToken = useCallback(() => {
-    localStorage.removeItem("token");
+    Cookies.remove("authToken");
     setIsLoggedIn(false);
   }, []);
 
@@ -47,6 +48,10 @@ const FrameComponent4 = ({ className = "" }) => {
   }, [navigate]);
 
   const onButtonContainerClick = useCallback(() => {
+    navigate("/");
+  }, [navigate]);
+
+  const onButtonContainerClick1 = useCallback(() => {
     if (isLoggedIn) {
       navigate("/7");
     } else {
@@ -55,10 +60,16 @@ const FrameComponent4 = ({ className = "" }) => {
   }, [isLoggedIn, navigate]);
 
   const onLogoutClick = useCallback(() => {
-    localStorage.removeItem("token");
+    Cookies.remove("authToken");
     setIsLoggedIn(false);
-    navigate("/4");
-  }, [navigate]);
+    // Remove navigate("/4") to prevent redirection
+  }, []);
+
+  useEffect(() => {
+    if (userProfile?.avatar_file) {
+      console.log('User avatar file path:', userProfile.avatar_file); // 你可以移除这个日志
+    }
+  }, [userProfile]);
 
   return (
     <header
@@ -123,7 +134,7 @@ const FrameComponent4 = ({ className = "" }) => {
             <div className="flex items-center justify-start pt-1.5">
               <img
                 className="h-10 w-10 rounded-full object-cover"
-                src={userProfile?.avatar_file || "/path/to/default-avatar.png"}
+                src={`http://106.52.158.123:5000/${userProfile?.avatar_file}` || "/path/to/default-avatar.png"}
                 alt="User Avatar"
               />
             </div>
@@ -131,7 +142,7 @@ const FrameComponent4 = ({ className = "" }) => {
         ) : (
           <div
             className="shadow-none rounded-lg bg-red flex items-center justify-center py-2.5 px-8 cursor-pointer hover:shadow-md"
-            onClick={onButtonContainerClick}
+            onClick={onButtonContainerClick1}
           >
             <div className="text-white">个人</div>
           </div>
