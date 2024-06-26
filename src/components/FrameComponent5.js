@@ -70,8 +70,10 @@ const FrameComponent5 = ({ userId }) => {
         withCredentials: true
       });
       setSuccess("Profile updated successfully");
+
+      // 成功更新后跳转到新页面并传递身份验证令牌
       setTimeout(() => {
-        window.location.href = 'http://106.52.158.123:3000/7';
+        window.location.href = `http://106.52.158.123:3000?token=${token}`;
       }, 3000);
     } catch (error) {
       setError(error.response ? error.response.data.message : error.message);
