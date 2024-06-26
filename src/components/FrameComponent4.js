@@ -16,7 +16,6 @@ const FrameComponent4 = ({ className = "" }) => {
         const token = Cookies.get('authToken');
         if (!token) return;
 
-        console.log('Fetching user profile with token:', token);
         const response = await axios.get('http://106.52.158.123:5000/api/profile', { 
           headers: { Authorization: `Bearer ${token}` },
           withCredentials: true
@@ -76,10 +75,10 @@ const FrameComponent4 = ({ className = "" }) => {
   }, [navigate, userProfile]);
 
   return (
-    <header className={`w-full flex flex-row items-center justify-between py-4 px-4 box-border text-left text-29xl text-red font-small-text ${className}`}>
-      <div className="flex flex-row items-center justify-start gap-5">
+    <header className={`w-full flex flex-wrap items-center justify-between py-4 px-4 box-border text-left text-29xl text-red font-small-text ${className}`}>
+      <div className="flex flex-row items-center gap-5">
         <img className="h-24 w-48 object-cover" loading="lazy" alt="Logo" src="/logo1-1@2x.png" />
-        <h1 className="m-0 relative text-inherit leading-6 font-medium font-inherit whitespace-nowrap">
+        <h1 className="m-0 text-inherit leading-6 font-medium">
           <span className="text-red">GO</span>
           <span className="text-black">TONG</span>
         </h1>
@@ -149,6 +148,16 @@ const FrameComponent4 = ({ className = "" }) => {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+          .flex-wrap {
+            flex-wrap: wrap;
+          }
+          .flex-row {
+            flex-direction: row;
+            justify-content: center;
+          }
         }
       `}</style>
     </header>
