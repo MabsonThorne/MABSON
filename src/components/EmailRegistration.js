@@ -36,8 +36,8 @@ const EmailRegistration = ({ className = "" }) => {
       try {
         const response = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
         const token = response.data.token;
-        localStorage.setItem("authToken", token);
-        localStorage.setItem("currentUser", JSON.stringify(response.data.user)); // 存储当前用户信息
+        console.log(`Received token: ${token}`);
+        document.cookie = `authToken=${token}; path=/;`; // 确保存储在 cookie 中
         window.location.href = "http://106.52.158.123:3000";
       } catch (error) {
         console.error("Login failed:", error);
@@ -52,12 +52,10 @@ const EmailRegistration = ({ className = "" }) => {
     }
     try {
       const response = await axios.post("http://106.52.158.123:5000/api/register", { username, email, password, role });
-      const user = response.data;
-      const loginResponse = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
-      const token = loginResponse.data.token;
-      localStorage.setItem("authToken", token);
-      localStorage.setItem("currentUser", JSON.stringify(loginResponse.data.user)); // 存储当前用户信息
-      window.location.href = `http://106.52.158.123:3000/2/${user.id}`;
+      const token = response.data.token; // 假设后端在注册时也返回 token
+      document.cookie = `authToken=${token}; path=/;`; // 存储 token 到 cookie
+      localStorage.setItem("currentUser", JSON.stringify(response.data.user)); // 存储当前用户信息
+      window.location.href = `http://106.52.158.123:3000/2/${response.data.user.id}`; // 确保跳转到正确的 URL
     } catch (error) {
       console.error("Registration failed:", error);
     }
@@ -73,7 +71,7 @@ const EmailRegistration = ({ className = "" }) => {
       handleLogin();
     }
   };
-
+  
   return (
     <div className={`w-[400px] flex flex-col items-start justify-start gap-[24px] max-w-full text-center text-base text-gray font-small-text ${className}`}>
       <div className="self-stretch flex flex-row items-start justify-center py-0 px-5 text-5xl text-black">
