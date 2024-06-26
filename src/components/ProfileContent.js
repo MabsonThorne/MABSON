@@ -19,7 +19,7 @@ const ProfileContent = ({ className = "" }) => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await axios.get(`http://106.52.158.123:5000/api/user_profiles/${id}`);
+        const response = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${id}`);
         setUserProfile(response.data);
         setNickname(response.data.username);
         setBio(response.data.bio);
