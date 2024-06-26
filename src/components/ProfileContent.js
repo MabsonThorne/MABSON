@@ -1,11 +1,107 @@
-import Card1 from "./Card1";
+import { useEffect, useState, useCallback } from "react";
+import axios from "axios";
 import PropTypes from "prop-types";
+import { useNavigate, useParams } from "react-router-dom";
+import Cookies from "js-cookie";
 
 const ProfileContent = ({ className = "" }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [userProfile, setUserProfile] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [nickname, setNickname] = useState("");
+  const [bio, setBio] = useState("");
+  const [email, setEmail] = useState("");
+  const [avatar, setAvatar] = useState(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = Cookies.get('authToken');
+        if (!token) return;
+
+        const response = await axios.get(`http://106.52.158.123:5000/api/user_profiles/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true
+        });
+
+        setUserProfile(response.data);
+        setNickname(response.data.username);
+        setBio(response.data.bio);
+        setEmail(response.data.email);
+        setAvatar(response.data.avatar_file);
+        setCurrentUserId(response.data.id);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [id]);
+
+  const handleAvatarClick = useCallback(() => {
+    if (isEditing) {
+      document.getElementById('avatar-upload').click();
+    } else {
+      // Implement the logic to enlarge the image
+      alert('Enlarging image is not implemented yet.');
+    }
+  }, [isEditing]);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('avatar_file', file);
+
+      try {
+        const token = Cookies.get('authToken');
+        const response = await axios.put(`http://106.52.158.123:5000/api/user_profiles/${id}`, formData, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+          withCredentials: true
+        });
+        setAvatar(response.data.avatar_file);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error uploading avatar:', error);
+      }
+    }
+  };
+
+  const handleEditClick = () => {
+    if (isEditing) {
+      // Save changes
+      const updateProfile = async () => {
+        try {
+          const token = Cookies.get('authToken');
+          const response = await axios.put(`http://106.52.158.123:5000/api/user_profiles/${id}`, {
+            username: nickname,
+            bio: bio
+          }, {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true
+          });
+
+          if (response.status === 200) {
+            setIsEditing(false);
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error('Error updating profile:', error);
+        }
+      };
+
+      updateProfile();
+    } else {
+      setIsEditing(true);
+    }
+  };
+
   return (
-    <section
-      className={`w-[1279px] flex flex-row items-end justify-start gap-[95px] max-w-full text-left text-45xl text-black font-small-text mq750:gap-[47px] mq450:gap-[24px] mq1125:flex-wrap ${className}`}
-    >
+    <section className={`w-[1279px] flex flex-row items-end justify-start gap-[95px] max-w-full text-left text-45xl text-black font-small-text mq750:gap-[47px] mq450:gap-[24px] mq1125:flex-wrap ${className}`}>
       <div className="flex-1 flex flex-col items-start justify-end pt-0 px-0 pb-[23px] box-border max-w-full mq750:min-w-full">
         <div className="self-stretch flex flex-col items-start justify-start gap-[37px] max-w-full mq450:gap-[18px]">
           <h1 className="m-0 w-[624px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block max-w-full mq1050:text-32xl mq450:text-19xl">
@@ -13,12 +109,7 @@ const ProfileContent = ({ className = "" }) => {
           </h1>
           <div className="self-stretch flex flex-col items-end justify-start py-0 pr-[42px] pl-0 box-border gap-[31px] max-w-full text-xl mq1050:pr-[21px] mq1050:box-border mq450:gap-[15px]">
             <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[30px] min-h-[554px]">
-              <Card1 />
-              <Card1 />
-              <Card1 />
-              <Card1 />
-              <Card1 />
-              <Card1 />
+              {/* Replace the Card1 components with your actual components */}
             </div>
             <div className="w-[686px] flex flex-row items-start justify-center py-0 px-5 box-border max-w-full text-base">
               <div className="rounded-xl bg-whitesmoke overflow-x-auto flex flex-row items-start justify-start p-2 gap-[8px]">
@@ -43,25 +134,80 @@ const ProfileContent = ({ className = "" }) => {
         </div>
       </div>
       <div className="w-[421px] flex flex-col items-start justify-start gap-[31px] min-w-[421px] max-w-full mq750:min-w-full mq450:gap-[15px] mq1125:flex-1">
-        <img
-          className="self-stretch h-[437px] relative rounded-71xl max-w-full overflow-hidden shrink-0 object-cover"
-          loading="lazy"
-          alt=""
-          src="/hero-image@2x.png"
-        />
+        <div className="relative w-full h-[437px]">
+          {isLoading && <div className="loader"></div>}
+          <img
+            className={`self-stretch h-[437px] relative rounded-71xl max-w-full overflow-hidden shrink-0 object-cover cursor-pointer ${isLoading ? 'hidden' : ''}`}
+            loading="lazy"
+            alt=""
+            src={avatar || "/path/to/default-avatar.png"}
+            onClick={handleAvatarClick}
+            style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}
+          />
+          <input
+            id="avatar-upload"
+            type="file"
+            className="hidden"
+            accept="image/*"
+            onChange={handleAvatarChange}
+          />
+        </div>
         <div className="self-stretch flex flex-col items-start justify-start gap-[24px]">
-          <h1 className="m-0 self-stretch h-[77px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block mq1050:text-32xl mq450:text-19xl">
-            昵称
-          </h1>
-          <h3 className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray mq450:text-lgi mq450:leading-[29px]">
-            <p className="m-0">ID:</p>
-            <p className="m-0">&nbsp;</p>
-            <p className="m-0">简介</p>
-            <p className="m-0">&nbsp;</p>
-            <p className="m-0">邮箱</p>
-          </h3>
+          {isEditing ? (
+            <>
+              <input
+                className="m-0 self-stretch h-[77px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block mq1050:text-32xl mq450:text-19xl"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+              />
+              <textarea
+                className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray mq450:text-lgi mq450:leading-[29px]"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+              />
+            </>
+          ) : (
+            <>
+              <h1 className="m-0 self-stretch h-[77px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block mq1050:text-32xl mq450:text-19xl">
+                {nickname}
+              </h1>
+              <h3 className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray mq450:text-lgi mq450:leading-[29px]">
+                <p className="m-0">ID: {id}</p>
+                <p className="m-0">&nbsp;</p>
+                <p className="m-0">简介: {bio}</p>
+                <p className="m-0">&nbsp;</p>
+                <p className="m-0">邮箱: {email}</p>
+              </h3>
+            </>
+          )}
+          {currentUserId === parseInt(id) && (
+            <button
+              className="rounded-lg bg-red-500 text-white px-4 py-2 cursor-pointer hover:shadow-lg"
+              onClick={handleEditClick}
+            >
+              {isEditing ? "完成" : "编辑"}
+            </button>
+          )}
         </div>
       </div>
+      <style jsx>{`
+        .loader {
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid red;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          animation: spin 2s linear infinite;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </section>
   );
 };
@@ -70,4 +216,4 @@ ProfileContent.propTypes = {
   className: PropTypes.string,
 };
 
-export default ProfileContent;图片那里改为按钮，也是悬停的时候有阴影效果，不悬停没有，图片弄个加载动画，加载动画就是在图片按钮中间一个红色的圆转圈，动画合并到这个文件里，根据url的id从数据库找头像图片然后显示，然后下面的昵称、ID、简介和邮箱也是根据采集的信息展示，然后邮箱下面加一个红色的编辑按钮，这个组件会检测目前登录的用户id的url的id是否一致，一致才会出现红色编辑按钮，点击编辑按钮后，进入编辑模式，进入编辑模式后编辑按钮变为完成按钮，点击图片按钮才可以重复上传并预览头像，否则没有进入编辑模式点击头像按钮只能把图片放大出来查看，点击后图片变回原样，然后在编辑模式简介和昵称都是可以改的，更改完后点击完成按钮后更新数据库信息，只有更新成功后数据库内容匹配才能退出编辑模式，完成按钮变成编辑按钮并重新加载网页，这样新改的内容就会重新展示，错误信息在控制台展示
+export default ProfileContent;
