@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
+import Cookies from "js-cookie";
 
 const FrameComponent2 = memo(({ className = "" }) => {
   const navigate = useNavigate();
@@ -10,7 +11,8 @@ const FrameComponent2 = memo(({ className = "" }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('authToken='));
+    const token = Cookies.get('authToken');
+    console.log('FrameComponent2 token:', token); // Debug log
     if (token) {
       setIsLoggedIn(true);
     } else {
