@@ -8,6 +8,7 @@ const FrameComponent4 = ({ className = "" }) => {
   const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -17,13 +18,14 @@ const FrameComponent4 = ({ className = "" }) => {
 
         const response = await axios.get('http://106.52.158.123:5000/api/profile', { 
           headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true // 使 axios 请求携带 cookies
+          withCredentials: true
         });
         setUserProfile(response.data);
         setIsLoggedIn(true);
       } catch (error) {
-        console.error('Error fetching user profile:', error);
         handleInvalidToken();
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -62,26 +64,18 @@ const FrameComponent4 = ({ className = "" }) => {
   const onLogoutClick = useCallback(() => {
     Cookies.remove("authToken");
     setIsLoggedIn(false);
-    // Remove navigate("/4") to prevent redirection
-  }, []);
+  }, [navigate]);
 
-  useEffect(() => {
-    if (userProfile?.avatar_file) {
-      console.log('User avatar file path:', userProfile.avatar_file); // 你可以移除这个日志
+  const onAvatarClick = useCallback(() => {
+    if (userProfile?.id) {
+      navigate(`/3/${userProfile.id}`);
     }
-  }, [userProfile]);
+  }, [navigate, userProfile]);
 
   return (
-    <header
-      className={`w-full flex flex-row items-center justify-between py-4 px-4 box-border text-left text-29xl text-red font-small-text ${className}`}
-    >
+    <header className={`w-full flex flex-row items-center justify-between py-4 px-4 box-border text-left text-29xl text-red font-small-text ${className}`}>
       <div className="flex flex-row items-center justify-start gap-5">
-        <img
-          className="h-24 w-48 object-cover"
-          loading="lazy"
-          alt="Logo"
-          src="/logo1-1@2x.png"
-        />
+        <img className="h-24 w-48 object-cover" loading="lazy" alt="Logo" src="/logo1-1@2x.png" />
         <h1 className="m-0 relative text-inherit leading-6 font-medium font-inherit whitespace-nowrap">
           <span className="text-red">GO</span>
           <span className="text-black">TONG</span>
@@ -89,65 +83,71 @@ const FrameComponent4 = ({ className = "" }) => {
       </div>
       <div className="flex flex-row items-center justify-center gap-6">
         <div className="flex items-center">
-          <h1
-            className="m-0 text-xl leading-6 font-medium cursor-pointer"
-            onClick={onHomeClick}
-            style={{ color: 'black' }}
-          >
+          <h1 className="m-0 text-xl leading-6 font-medium cursor-pointer" onClick={onHomeClick} style={{ color: 'black' }}>
             首页
           </h1>
         </div>
         <div className="flex items-center">
-          <h1
-            className="m-0 text-xl leading-6 font-medium cursor-pointer"
-            onClick={onTextClick}
-            style={{ color: 'black' }}
-          >
+          <h1 className="m-0 text-xl leading-6 font-medium cursor-pointer" onClick={onTextClick} style={{ color: 'black' }}>
             采购端
           </h1>
         </div>
         <div className="flex items-center">
-          <h1
-            className="m-0 text-xl leading-6 font-medium cursor-pointer"
-            onClick={onTextClick1}
-            style={{ color: 'black' }}
-          >
+          <h1 className="m-0 text-xl leading-6 font-medium cursor-pointer" onClick={onTextClick1} style={{ color: 'black' }}>
             需求端
           </h1>
         </div>
       </div>
       <div className="flex flex-row items-center justify-end gap-5 text-base">
-        <div
-          className="shadow-none rounded-lg bg-red flex items-center justify-center py-2.5 px-8 cursor-pointer hover:shadow-md"
-          onClick={onButtonContainerClick}
-        >
+        <div className="shadow-none rounded-lg bg-red flex items-center justify-center py-2.5 px-8 cursor-pointer hover:shadow-md" onClick={onButtonContainerClick}>
           <div className="text-white">消息</div>
         </div>
         {isLoggedIn ? (
           <>
-            <div
-              className="shadow-none rounded-lg bg-red flex items-center justify-center py-2.5 px-8 cursor-pointer hover:shadow-md"
-              onClick={onLogoutClick}
-            >
+            <div className="shadow-none rounded-lg bg-red flex items-center justify-center py-2.5 px-8 cursor-pointer hover:shadow-md" onClick={onLogoutClick}>
               <div className="text-white">登出</div>
             </div>
-            <div className="flex items-center justify-start pt-1.5">
-              <img
-                className="h-10 w-10 rounded-full object-cover"
-                src={`http://106.52.158.123:5000/${userProfile?.avatar_file}` || "/path/to/default-avatar.png"}
-                alt="User Avatar"
-              />
+            <div className="flex items-center justify-start pt-1.5 relative">
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="loader"></div>
+                </div>
+              )}
+              <button
+                className={`h-16 w-16 rounded-full overflow-hidden focus:outline-none ${loading ? 'opacity-50' : 'opacity-100'} transition-shadow duration-300`}
+                onClick={onAvatarClick}
+                disabled={loading}
+                style={{ boxShadow: '0px 0px 15px rgba(0,0,0,0.3)' }}
+              >
+                <img
+                  className="w-full h-full object-cover"
+                  src={userProfile?.avatar_file ? `http://106.52.158.123:5000/${userProfile.avatar_file}` : "/path/to/default-avatar.png"}
+                  alt="User Avatar"
+                />
+              </button>
             </div>
           </>
         ) : (
-          <div
-            className="shadow-none rounded-lg bg-red flex items-center justify-center py-2.5 px-8 cursor-pointer hover:shadow-md"
-            onClick={onButtonContainerClick1}
-          >
+          <div className="shadow-none rounded-lg bg-red flex items-center justify-center py-2.5 px-8 cursor-pointer hover:shadow-md" onClick={onButtonContainerClick1}>
             <div className="text-white">个人</div>
           </div>
         )}
       </div>
+      <style jsx>{`
+        .loader {
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid red;
+          border-radius: 50%;
+          width: 32px;
+          height: 32px;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </header>
   );
 };
