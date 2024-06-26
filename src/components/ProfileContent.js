@@ -36,17 +36,19 @@ const ProfileContent = ({ className = "" }) => {
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching user profile:', error);
+        setIsLoading(false);
       }
     };
 
-    fetchUserProfile();
+    if (id) {
+      fetchUserProfile();
+    }
   }, [id]);
 
   const handleAvatarClick = useCallback(() => {
     if (isEditing) {
       document.getElementById('avatar-upload').click();
     } else {
-      // Implement the logic to enlarge the image
       alert('Enlarging image is not implemented yet.');
     }
   }, [isEditing]);
@@ -73,7 +75,6 @@ const ProfileContent = ({ className = "" }) => {
 
   const handleEditClick = () => {
     if (isEditing) {
-      // Save changes
       const updateProfile = async () => {
         try {
           const token = Cookies.get('authToken');
@@ -182,7 +183,7 @@ const ProfileContent = ({ className = "" }) => {
           )}
           {currentUserId === parseInt(id) && (
             <button
-              className="rounded-lg bg-red-500 text-white px-4 py-2 cursor-pointer hover:shadow-lg"
+              className="rounded-lg bg-red-500 text-white py-2 px-4"
               onClick={handleEditClick}
             >
               {isEditing ? "完成" : "编辑"}
@@ -190,7 +191,7 @@ const ProfileContent = ({ className = "" }) => {
           )}
         </div>
       </div>
-      <style jsx>{`
+      <style>{`
         .loader {
           border: 4px solid #f3f3f3;
           border-top: 4px solid red;
