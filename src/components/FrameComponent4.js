@@ -14,7 +14,10 @@ const FrameComponent4 = ({ className = "" }) => {
     const fetchUserProfile = async () => {
       try {
         const token = Cookies.get('authToken');
-        if (!token) return;
+        if (!token) {
+          setIsLoading(false);
+          return;
+        }
 
         const response = await axios.get('http://106.52.158.123:5000/api/profile', { 
           headers: { Authorization: `Bearer ${token}` },
@@ -26,6 +29,7 @@ const FrameComponent4 = ({ className = "" }) => {
       } catch (error) {
         console.error('Error fetching user profile:', error);
         handleInvalidToken();
+        setIsLoading(false);
       }
     };
 
@@ -64,8 +68,7 @@ const FrameComponent4 = ({ className = "" }) => {
   const onLogoutClick = useCallback(() => {
     Cookies.remove("authToken");
     setIsLoggedIn(false);
-    navigate("/4");
-  }, [navigate]);
+  }, []);
 
   const onAvatarClick = useCallback(() => {
     if (userProfile && userProfile.id) {
