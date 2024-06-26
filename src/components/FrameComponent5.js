@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import imageCompression from 'browser-image-compression';
 import { FaMale, FaFemale } from "react-icons/fa";
+import Cookies from 'js-cookie';
 
 const FrameComponent5 = ({ userId }) => {
   const [avatar, setAvatar] = useState(null);
@@ -61,7 +62,7 @@ const FrameComponent5 = ({ userId }) => {
     formData.append('gender', gender);
 
     try {
-      const token = localStorage.getItem('authToken');
+      const token = Cookies.get('authToken');
       const response = await axios.put(`http://106.52.158.123:5000/api/user_profiles/${userId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -71,7 +72,7 @@ const FrameComponent5 = ({ userId }) => {
       });
       setSuccess("Profile updated successfully");
 
-      // 成功更新后跳转到新页面并传递身份验证令牌
+      // 成功更新后跳转到根页面并传递身份验证令牌
       setTimeout(() => {
         window.location.href = `http://106.52.158.123:3000?token=${token}`;
       }, 3000);
