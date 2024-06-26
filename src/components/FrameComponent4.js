@@ -135,7 +135,7 @@ const FrameComponent4 = ({ className = "" }) => {
           </div>
         )}
       </div>
-      <style jsx>{`
+      <style>{`
         .loader {
           border: 4px solid #f3f3f3;
           border-top: 4px solid red;
