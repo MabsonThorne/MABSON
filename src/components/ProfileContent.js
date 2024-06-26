@@ -1,4 +1,4 @@
-import Card1 from "./Card1";
+import Card1 from "./UserCard";
 import PropTypes from "prop-types";
 
 const ProfileContent = ({ className = "" }) => {
@@ -13,12 +13,7 @@ const ProfileContent = ({ className = "" }) => {
           </h1>
           <div className="self-stretch flex flex-col items-end justify-start py-0 pr-[42px] pl-0 box-border gap-[31px] max-w-full text-xl mq1050:pr-[21px] mq1050:box-border mq450:gap-[15px]">
             <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[30px] min-h-[554px]">
-              <Card1 />
-              <Card1 />
-              <Card1 />
-              <Card1 />
-              <Card1 />
-              <Card1 />
+              <UserCard />
             </div>
             <div className="w-[686px] flex flex-row items-start justify-center py-0 px-5 box-border max-w-full text-base">
               <div className="rounded-xl bg-whitesmoke-200 overflow-x-auto flex flex-row items-start justify-start p-2 gap-[8px]">
