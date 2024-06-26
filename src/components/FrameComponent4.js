@@ -15,7 +15,7 @@ const FrameComponent4 = ({ className = "" }) => {
         if (!token) return;
 
         console.log('Fetching user profile with token:', token);
-        const response = await axios.get('http://106.52.158.123:5000/api/profile', { // 更新为5000端口
+        const response = await axios.get('http://106.52.158.123:5000/api/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUserProfile(response.data);
@@ -47,12 +47,8 @@ const FrameComponent4 = ({ className = "" }) => {
   }, [navigate]);
 
   const onButtonContainerClick = useCallback(() => {
-    navigate("/");
-  }, [navigate]);
-
-  const onButtonContainerClick1 = useCallback(() => {
     if (isLoggedIn) {
-      navigate("/3");
+      navigate("/7");
     } else {
       navigate("/4");
     }
@@ -135,7 +131,7 @@ const FrameComponent4 = ({ className = "" }) => {
         ) : (
           <div
             className="shadow-none rounded-lg bg-red flex items-center justify-center py-2.5 px-8 cursor-pointer hover:shadow-md"
-            onClick={onButtonContainerClick1}
+            onClick={onButtonContainerClick}
           >
             <div className="text-white">个人</div>
           </div>
