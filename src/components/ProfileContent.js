@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import PropTypes from "prop-types";
 import { useNavigate, useParams } from "react-router-dom";
-import Cookies from "js-cookie";
 
 const ProfileContent = ({ className = "" }) => {
   const { id } = useParams();
@@ -95,43 +94,27 @@ const ProfileContent = ({ className = "" }) => {
   };
 
   return (
-    <section className={`w-[1279px] flex flex-row items-end justify-start gap-[95px] max-w-full text-left text-45xl text-black font-small-text mq750:gap-[47px] mq450:gap-[24px] mq1125:flex-wrap ${className}`}>
-      <div className="flex-1 flex flex-col items-start justify-end pt-0 px-0 pb-[23px] box-border max-w-full mq750:min-w-full">
-        <div className="self-stretch flex flex-col items-start justify-start gap-[37px] max-w-full mq450:gap-[18px]">
-          <h1 className="m-0 w-[624px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block max-w-full mq1050:text-32xl mq450:text-19xl">
-            发布过的
-          </h1>
-          <div className="self-stretch flex flex-col items-end justify-start py-0 pr-[42px] pl-0 box-border gap-[31px] max-w-full text-xl mq1050:pr-[21px] mq1050:box-border mq450:gap-[15px]">
-            <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[30px] min-h-[554px]">
-              {/* Replace the Card1 components with your actual components */}
-            </div>
-            <div className="w-[686px] flex flex-row items-start justify-center py-0 px-5 box-border max-w-full text-base">
-              <div className="rounded-xl bg-whitesmoke overflow-x-auto flex flex-row items-start justify-start p-2 gap-[8px]">
-                <div className="rounded-lg bg-whitesmoke flex flex-row items-start justify-start py-2 px-4">
-                  <div className="relative leading-[150%] font-medium inline-block min-w-[48px] whitespace-nowrap">
-                    上一页
-                  </div>
-                </div>
-                <div className="w-[70px] rounded-lg bg-whitesmoke shrink-0 flex flex-row items-start justify-start py-2 px-4 box-border">
-                  <div className="flex-1 relative leading-[150%] font-medium whitespace-nowrap">
-                    ？/？
-                  </div>
-                </div>
-                <div className="rounded-lg bg-whitesmoke flex flex-row items-start justify-start py-2 px-4">
-                  <div className="relative leading-[150%] font-medium inline-block min-w-[48px] whitespace-nowrap">
-                    下一页
-                  </div>
-                </div>
-              </div>
+    <section className={`w-full flex flex-col lg:flex-row items-start justify-start gap-6 p-4 ${className}`}>
+      <div className="flex flex-col items-start justify-end w-full lg:w-2/3">
+        <div className="flex flex-col items-start justify-start gap-6 w-full">
+          <h1 className="text-2xl lg:text-4xl font-bold">发布过的</h1>
+          <div className="flex flex-wrap items-start justify-start gap-6 w-full">
+            {/* Replace the Card1 components with your actual components */}
+          </div>
+          <div className="flex items-center justify-center w-full text-base">
+            <div className="flex items-center justify-start gap-2 p-2 bg-gray-100 rounded-xl">
+              <button className="py-2 px-4 bg-gray-200 rounded-lg">上一页</button>
+              <div className="w-16 text-center">？/？</div>
+              <button className="py-2 px-4 bg-gray-200 rounded-lg">下一页</button>
             </div>
           </div>
         </div>
       </div>
-      <div className="w-[421px] flex flex-col items-start justify-start gap-[31px] min-w-[421px] max-w-full mq750:min-w-full mq450:gap-[15px] mq1125:flex-1">
-        <div className="relative w-full h-[437px]">
+      <div className="flex flex-col items-start justify-start w-full lg:w-1/3">
+        <div className="relative w-full h-96">
           {isLoading && <div className="loader"></div>}
           <img
-            className={`self-stretch h-[437px] relative rounded-71xl max-w-full overflow-hidden shrink-0 object-cover cursor-pointer ${isLoading ? 'hidden' : ''}`}
+            className={`w-full h-full rounded-xl object-cover cursor-pointer ${isLoading ? 'hidden' : ''}`}
             loading="lazy"
             alt=""
             src={avatar || "/path/to/default-avatar.png"}
@@ -146,37 +129,33 @@ const ProfileContent = ({ className = "" }) => {
             onChange={handleAvatarChange}
           />
         </div>
-        <div className="self-stretch flex flex-col items-start justify-start gap-[24px]">
+        <div className="flex flex-col items-start justify-start gap-4 w-full mt-4">
           {isEditing ? (
             <>
               <input
-                className="m-0 self-stretch h-[77px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block mq1050:text-32xl mq450:text-19xl"
+                className="w-full h-12 text-xl font-bold"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
               />
               <textarea
-                className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray mq450:text-lgi mq450:leading-[29px]"
+                className="w-full h-32 text-lg text-gray-700"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
               />
             </>
           ) : (
             <>
-              <h1 className="m-0 self-stretch h-[77px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block mq1050:text-32xl mq450:text-19xl">
-                {nickname}
-              </h1>
-              <h3 className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray mq450:text-lgi mq450:leading-[29px]">
-                <p className="m-0">ID: {id}</p>
-                <p className="m-0">&nbsp;</p>
-                <p className="m-0">简介: {bio}</p>
-                <p className="m-0">&nbsp;</p>
-                <p className="m-0">邮箱: {email}</p>
+              <h1 className="w-full text-2xl font-bold">{nickname}</h1>
+              <h3 className="w-full text-lg text-gray-700">
+                <p>ID: {id}</p>
+                <p>简介: {bio}</p>
+                <p>邮箱: {email}</p>
               </h3>
             </>
           )}
           {currentUserId === parseInt(id) && (
             <button
-              className="rounded-lg bg-red-500 text-white py-2 px-4"
+              className="py-2 px-4 bg-red-500 text-white rounded-lg"
               onClick={handleEditClick}
             >
               {isEditing ? "完成" : "编辑"}
