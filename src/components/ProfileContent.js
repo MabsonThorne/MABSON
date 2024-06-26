@@ -19,14 +19,7 @@ const ProfileContent = ({ className = "" }) => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const token = Cookies.get('authToken');
-        if (!token) return;
-
-        const response = await axios.get(`http://106.52.158.123:5000/api/user_profiles/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true
-        });
-
+        const response = await axios.get(`http://106.52.158.123:5000/api/user_profiles/${id}`);
         setUserProfile(response.data);
         setNickname(response.data.username);
         setBio(response.data.bio);
