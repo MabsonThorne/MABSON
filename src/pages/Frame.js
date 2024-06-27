@@ -70,7 +70,7 @@ const Frame = () => {
   };
 
   const randomProductIds = getRandomItems(productIds, 8);
-
+  
   return (
     <div className="w-full relative bg-white overflow-hidden flex flex-col items-start justify-start pt-[46px] px-4 pb-12 box-border gap-[100px] leading-normal tracking-normal mq450:gap-[25px] mq750:gap-[50px] mq750:px-10">
       <section className="self-stretch flex flex-col items-start justify-start pt-0 pb-5 gap-8 max-w-full text-left text-xl text-gray-100 font-small-text mq750:gap-[15px]">
