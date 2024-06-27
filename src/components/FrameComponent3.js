@@ -1,135 +1,117 @@
-import React, { useCallback, useState, useEffect } from "react";
-import { Button } from "@mui/material";
-import PropTypes from "prop-types";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Button } from '@mui/material';
+import PropTypes from 'prop-types';
 
 const FrameComponent3 = ({ className = "" }) => {
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [productName, setProductName] = useState("");
-  const [productDescription, setProductDescription] = useState("");
-  const [productPrice, setProductPrice] = useState("");
-  const [productQuantity, setProductQuantity] = useState("");
+  const [productName, setProductName] = useState('');
+  const [productDescription, setProductDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [quantity, setQuantity] = useState('');
   const [paymentMethods, setPaymentMethods] = useState([]);
-  const [userId, setUserId] = useState(null);
+  const [image, setImage] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    // 获取当前登录用户的 ID
-    axios.get(`http://106.52.158.123:5000/api/profile`, { withCredentials: true })
+    axios.get('http://106.52.158.123:5000/api/profile', { withCredentials: true })
       .then(response => {
-        setUserId(response.data.id);
+        setCurrentUserId(response.data.id);
       })
       .catch(error => {
-        console.error("Error fetching current user profile:", error);
+        console.error('Error fetching current user profile:', error);
       });
   }, []);
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
+    setImage(e.target.files[0]);
   };
 
-  const handleInputChange = (setter) => (e) => {
-    setter(e.target.value);
+  const handlePaymentMethodChange = (method) => {
+    setPaymentMethods(prev => {
+      if (prev.includes(method)) {
+        return prev.filter(m => m !== method);
+      } else {
+        return [...prev, method];
+      }
+    });
   };
 
-  const togglePaymentMethod = (method) => {
-    setPaymentMethods((prevMethods) =>
-      prevMethods.includes(method)
-        ? prevMethods.filter((m) => m !== method)
-        : [...prevMethods, method]
-    );
+  const validateForm = () => {
+    const newErrors = {};
+    if (!productName) newErrors.productName = '商品名称不能为空';
+    if (!productDescription) newErrors.productDescription = '商品描述不能为空';
+    if (!price) newErrors.price = '预估报价不能为空';
+    if (!quantity) newErrors.quantity = '商品数量不能为空';
+    return newErrors;
   };
 
-  const handleSubmit = () => {
-    if (!image || !productName || !productPrice || !productQuantity || paymentMethods.length === 0) {
-      alert("请填写所有必填字段。");
+  const handleSubmit = async () => {
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
     const formData = new FormData();
-    formData.append("name", productName);
-    formData.append("price", productPrice);
-    formData.append("quantity", productQuantity);
-    formData.append("description", productDescription);
-    formData.append("user_id", userId);
-    formData.append("image", image);
-    formData.append("paymentMethods", paymentMethods.join(","));
+    formData.append('name', productName);
+    formData.append('description', productDescription);
+    formData.append('price', price);
+    formData.append('quantity', quantity);
+    formData.append('paymentMethods', paymentMethods.join(','));
+    formData.append('image', image);
 
-    axios
-      .post(`http://106.52.158.123:5000/api/products`, formData, {
+    // 打印 FormData 内容
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+
+    try {
+      await axios.post('http://106.52.158.123:5000/api/products', formData, {
         withCredentials: true,
         headers: {
-          "Content-Type": "multipart/form-data",
+          'Content-Type': 'multipart/form-data',
         },
-      })
-      .then(() => {
-        window.location.href = `http://106.52.158.123:3000/3/${userId}`;
-      })
-      .catch((error) => {
-        console.error("创建产品时出错:", error);
       });
+      window.location.href = `http://106.52.158.123:3000/3/${currentUserId}`;
+    } catch (error) {
+      console.error('Error creating product:', error);
+    }
   };
 
   return (
-    <div
-      className={`self-stretch flex flex-row items-start justify-start gap-[140px] max-w-full text-left text-5xl text-black font-small-text lg:flex-wrap lg:gap-[70px] mq750:gap-[35px] mq450:gap-[17px] ${className}`}
-    >
+    <div className={`self-stretch flex flex-row items-start justify-start gap-[140px] max-w-full text-left text-5xl text-black font-small-text lg:flex-wrap lg:gap-[70px] mq750:gap-[35px] mq450:gap-[17px] ${className}`}>
       <div className="flex-1 flex flex-col items-start justify-start gap-[80px] min-w-[406px] max-w-full mq750:gap-[40px] mq750:min-w-full mq450:gap-[20px]">
-        <div className="self-stretch h-[613px] relative rounded-xl max-w-full overflow-hidden shrink-0 flex items-center justify-center bg-gray-200 shadow-lg">
-          {!imagePreview && (
-            <label className="cursor-pointer flex items-center justify-center w-full h-full">
-              <span className="text-5xl text-gray-400">+</span>
-              <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: "none" }} />
-            </label>
+        <button className="self-stretch h-[613px] relative rounded-xl max-w-full overflow-hidden shrink-0 flex items-center justify-center bg-gray-200 shadow-lg" onClick={() => document.getElementById('image-upload').click()}>
+          {image ? (
+            <img src={URL.createObjectURL(image)} alt="Product" className="object-cover w-full h-full" />
+          ) : (
+            <span className="text-6xl">+</span>
           )}
-          {imagePreview && <img src={imagePreview} alt="Product Preview" className="object-cover w-full h-full" />}
-        </div>
+          <input id="image-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageChange} />
+        </button>
         <h3 className="m-0 self-stretch relative text-inherit leading-[150%] font-normal font-inherit mq450:text-lgi mq450:leading-[29px]">
           相关商品
         </h3>
       </div>
       <div className="w-[515px] flex flex-col items-start justify-start gap-[24px] min-w-[515px] max-w-full text-xl text-gray lg:flex-1 mq750:min-w-full">
-        <input
-          className="m-0 self-stretch relative text-21xl leading-[110%] font-semibold font-inherit text-black mq1050:text-13xl mq1050:leading-[35px] mq450:text-5xl mq450:leading-[26px] bg-transparent border-none outline-none"
-          placeholder="商品名称"
-          value={productName}
-          onChange={handleInputChange(setProductName)}
-        />
-        <textarea
-          className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit mq450:text-lgi mq450:leading-[29px] bg-transparent border-none outline-none resize-none"
-          placeholder="商品描述"
-          value={productDescription}
-          onChange={handleInputChange(setProductDescription)}
-        />
-        <input
-          className="self-stretch relative leading-[150%] font-medium text-black mq450:text-base mq450:leading-[24px] bg-transparent border-none outline-none"
-          placeholder="预估报价：$10.99"
-          value={productPrice}
-          onChange={handleInputChange(setProductPrice)}
-        />
-        <input
-          className="self-stretch relative leading-[150%] font-medium text-black mq450:text-base mq450:leading-[24px] bg-transparent border-none outline-none"
-          placeholder="商品数量"
-          value={productQuantity}
-          onChange={handleInputChange(setProductQuantity)}
-        />
-        <div className="flex flex-col gap-2">
-          <div className="self-stretch relative leading-[150%] font-medium text-black mq450:text-base mq450:leading-[24px]">
-            支持的支付方式：
+        <input type="text" className="m-0 self-stretch relative text-21xl leading-[110%] font-semibold font-inherit text-black mq1050:text-13xl mq1050:leading-[35px] mq450:text-5xl mq450:leading-[26px]" placeholder="商品名称" value={productName} onChange={(e) => setProductName(e.target.value)} />
+        {errors.productName && <span className="text-red-500">{errors.productName}</span>}
+        <textarea className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit mq450:text-lgi mq450:leading-[29px]" placeholder="商品描述" value={productDescription} onChange={(e) => setProductDescription(e.target.value)} />
+        {errors.productDescription && <span className="text-red-500">{errors.productDescription}</span>}
+        <input type="text" className="self-stretch relative leading-[150%] font-medium text-black mq450:text-base mq450:leading-[24px]" placeholder="预估报价" value={price} onChange={(e) => setPrice(e.target.value)} />
+        {errors.price && <span className="text-red-500">{errors.price}</span>}
+        <input type="text" className="self-stretch relative leading-[150%] font-medium text-black mq450:text-base mq450:leading-[24px]" placeholder="商品数量" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+        {errors.quantity && <span className="text-red-500">{errors.quantity}</span>}
+        <div className="self-stretch relative leading-[150%] font-medium">
+          支持的支付方式：
+          <div className="flex flex-col gap-4 mt-2">
+            {['支付宝', '微信支付', 'PayPal'].map((method) => (
+              <button key={method} className={`bg-white shadow p-2 rounded ${paymentMethods.includes(method) ? 'border-2 border-red-500' : ''}`} onClick={() => handlePaymentMethodChange(method)}>
+                {method}
+              </button>
+            ))}
           </div>
-          {["支付宝", "微信支付", "PayPal"].map((method) => (
-            <button
-              key={method}
-              className={`w-full py-2 rounded-lg shadow-md ${paymentMethods.includes(method) ? 'border-2 border-red-500' : ''}`}
-              onClick={() => togglePaymentMethod(method)}
-            >
-              {method}
-            </button>
-          ))}
         </div>
         <Button
           className="self-stretch h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border"
