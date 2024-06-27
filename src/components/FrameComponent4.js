@@ -1,5 +1,3 @@
-GNU nano 6.2                                                                                                                                                                                                                                                                                                                                                                                                                                            /home/ubuntu/gotong/src/components/FrameComponent4.js                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import axios from "axios";
