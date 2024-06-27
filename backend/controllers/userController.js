@@ -118,7 +118,7 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-exports.getCurrentUserProfile = async (req, res) => {
+exports.getUserProfile = async (req, res) => {
   const userId = req.user.id; // 使用认证后的用户 ID
 
   try {
