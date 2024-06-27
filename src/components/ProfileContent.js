@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
 import ProductCard from "./ProductCard";
-import Cookies from "js-cookie";
 
 const ProfileContent = ({ className = "", id }) => {
   const [userData, setUserData] = useState(null);
@@ -23,6 +22,7 @@ const ProfileContent = ({ className = "", id }) => {
     // 获取当前登录用户的 ID
     axios.get(`http://106.52.158.123:5000/api/profile`, { withCredentials: true })
       .then(response => {
+        console.log("Current User ID:", response.data.id);
         setCurrentUserId(response.data.id);
       })
       .catch(error => {
@@ -32,6 +32,7 @@ const ProfileContent = ({ className = "", id }) => {
     // 获取用户资料
     axios.get(`http://106.52.158.123:5000/api/basic_profile/${id}`, { withCredentials: true })
       .then(response => {
+        console.log("Profile User ID:", id);
         setUserData(response.data);
         setNewUserData(response.data);
         setLoading(false);
@@ -260,7 +261,7 @@ const ProfileContent = ({ className = "", id }) => {
                   <p className="m-0">简介: {userData.bio}</p>
                   <p className="m-0">性别: {genderSymbol}</p>
                   <p className="m-0">邮箱: {userData.email}</p>
-                  {currentUserId === id && (
+                  {currentUserId == id && ( // 检查类型是否匹配
                     <button style={buttonStyle} onClick={handleEdit}>编辑</button>
                   )}
                 </div>
