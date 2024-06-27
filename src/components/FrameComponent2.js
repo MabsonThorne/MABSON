@@ -22,7 +22,7 @@ const FrameComponent2 = memo(({ className = "" }) => {
 
   const onButtonClick = useCallback(() => {
     if (isLoggedIn) {
-      navigate("/6");
+      navigate("/1");
     } else {
       navigate("/4");
     }
