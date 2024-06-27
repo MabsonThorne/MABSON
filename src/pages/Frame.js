@@ -12,27 +12,34 @@ import FrameComponent4 from "../components/FrameComponent4";
 const Frame = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
-  const [searchers, setSearchers] = useState([]);
+  const [searcherIds, setSearcherIds] = useState([]);
+  const [productIds, setProductIds] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("/api/products");
+      const response = await fetch("http://106.52.158.123:5000/api/product_ids");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
-      setProducts(data);
+      setProductIds(data);
     } catch (error) {
-      console.error("Failed to fetch products:", error);
+      console.error("Failed to fetch product IDs:", error);
     }
   };
 
-  const fetchSearchers = async () => {
+  const fetchSearcherIds = async () => {
     try {
-      const response = await fetch("/api/searchers");
+      const response = await fetch("http://106.52.158.123:5000/api/searcher_ids");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
-      setSearchers(data);
+      setSearcherIds(data);
     } catch (error) {
-      console.error("Failed to fetch searchers:", error);
+      console.error("Failed to fetch searcher IDs:", error);
     }
   };
 
@@ -42,7 +49,7 @@ const Frame = () => {
 
   useEffect(() => {
     fetchProducts();
-    fetchSearchers();
+    fetchSearcherIds();
     checkLoginStatus();
   }, []);
 
@@ -59,14 +66,21 @@ const Frame = () => {
     console.log("Search term:", searchTerm);
   };
 
+  const getRandomItems = (items, numItems) => {
+    const shuffled = items.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, numItems);
+  };
+
+  const randomProductIds = getRandomItems(productIds, 8);
+
   return (
     <div className="w-full relative bg-white overflow-hidden flex flex-col items-start justify-start pt-[46px] px-4 pb-12 box-border gap-[100px] leading-normal tracking-normal mq450:gap-[25px] mq750:gap-[50px] mq750:px-10">
       <section className="self-stretch flex flex-col items-start justify-start pt-0 pb-5 gap-8 max-w-full text-left text-xl text-gray-100 font-small-text mq750:gap-[15px]">
         <FrameComponent4 />
         <FrameComponent2 />
         <div className="w-full flex flex-col items-center justify-center py-0 box-border max-w-full">
-          <div className="w-full flex flex-col mq750:flex-row items-center justify-center gap-6 max-w-full">
-            <div className="flex-1 flex flex-col items-center justify-start min-w-[319px] max-w-full">
+          <div className="w-full flex flex-row flex-wrap items-center justify-center gap-6 max-w-full">
+            <div className="flex-1 flex flex-col items-center justify-center pt-4 px-0 pb-0 min-w-[319px] max-w-full">
               <TextField
                 variant="outlined"
                 fullWidth
@@ -91,6 +105,9 @@ const Frame = () => {
                 },
                 width: 124,
                 height: 62,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
               提交
@@ -104,14 +121,11 @@ const Frame = () => {
           <span>优质</span>
           <span className="text-black">采购者</span>
         </h1>
-        <div className="self-stretch flex flex-row flex-wrap items-end justify-between min-h-[764px] max-w-full gap-[20px]">
-          {searchers.slice(0, 8).map((searcher, index) => (
+        <div className="self-stretch flex flex-row flex-wrap items-center justify-between gap-[20px]">
+          {searcherIds.slice(0, 8).map((searcher, index) => (
             <UserCard
               key={index}
-              avatar={searcher.avatar}
-              name={searcher.name}
-              bio={searcher.bio}
-              rating={searcher.rating}
+              id={searcher.id}
               propWidth="404px"
               propMinWidth="384px"
             />
@@ -123,15 +137,11 @@ const Frame = () => {
           <span>优质</span>
           <span className="text-black">需求品</span>
         </h1>
-        <div className="self-stretch flex flex-row flex-wrap items-end justify-between min-h-[764px] max-w-full gap-[20px]">
-          {products.slice(0, 8).map((product, index) => (
+        <div className="self-stretch flex flex-row flex-wrap items-center justify-between gap-[20px]">
+          {randomProductIds.map((product, index) => (
             <ProductCard
               key={index}
-              image={product.image}
-              productName={product.name}
-              productDescription={product.description}
-              price={product.price}
-              quantity={product.quantity}
+              id={product.id}
               propWidth="404px"
               propMinWidth="384px"
             />
