@@ -17,7 +17,7 @@ const ProfileContent = ({ className = "", id }) => {
       return;
     }
 
-    axios.get(`http://106.52.158.123:5000/api/basic_profile/${id}`)
+    axios.get(`http://106.52.158.123:5000/api/basic_profile/${id}`, { withCredentials: true })
       .then(response => {
         setUserData(response.data);
         setNewUserData(response.data);
@@ -85,15 +85,10 @@ const ProfileContent = ({ className = "", id }) => {
         username: newUserData.username,
         email: newUserData.email,
       }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // 假设 token 存储在 localStorage 中
-        }
+        withCredentials: true
       }),
       axios.put(`http://106.52.158.123:5000/api/user_profiles/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // 假设 token 存储在 localStorage 中
-        }
+        withCredentials: true
       })
     ])
     .then(() => {
@@ -233,9 +228,9 @@ const ProfileContent = ({ className = "", id }) => {
                   className="w-full"
                 />
               </label>
-              <div className="flex justify-between w-full">
-                <button style={buttonStyle} onClick={handleCancel}>取消</button>
-                <button style={buttonStyle} onClick={handleSubmit}>完成</button>
+              <div className="flex justify-between w-full gap-2">
+                <button style={smallButtonStyle} onClick={handleCancel}>取消</button>
+                <button style={smallButtonStyle} onClick={handleSubmit}>完成</button>
               </div>
             </>
           ) : (
@@ -276,6 +271,19 @@ const buttonStyle = {
   fontSize: "16px",
   cursor: "pointer",
   borderRadius: "5px",
+  width: "100%",
+};
+
+const smallButtonStyle = {
+  backgroundColor: "red",
+  color: "white",
+  border: "none",
+  padding: "10px 20px",
+  fontSize: "16px",
+  cursor: "pointer",
+  borderRadius: "5px",
+  flex: 1,
+  textAlign: "center",
 };
 
 // 将CSS样式添加到页面的style标签中
