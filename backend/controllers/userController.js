@@ -1,4 +1,3 @@
-const UserProfile = require('../models/userProfile');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
@@ -119,7 +118,7 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-exports.getUserProfile = async (req, res) => {
+exports.getCurrentUserProfile = async (req, res) => {
   const userId = req.user.id; // 使用认证后的用户 ID
 
   try {
@@ -264,79 +263,6 @@ exports.updateUserProfile = async (req, res) => {
     res.send('User profile updated successfully');
   } catch (error) {
     // 捕捉并打印错误信息
-    console.error('Error updating user profile:', error);
-    res.status(500).send('Error updating user profile');
-  }
-};
-
-exports.testConnection = (req, res) => {
-  console.log('Received test-connection request');
-  db.query('SELECT 1 + 1 AS solution', (err, results) => {
-    if (err) {
-      console.error('Error connecting to the database', err);
-      return res.status(500).send('Error connecting to the database');
-    }
-    console.log('Database query successful', results);
-    res.send(`Database connection successful: ${results[0].solution}`);
-  });
-};
-
-exports.verifyToken = (req, res) => {
-  const token = req.query.token;
-  if (!token) {
-    return res.status(400).send('Token is required');
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    res.json({ valid: true, decoded });
-  } catch (error) {
-    res.status(400).send('Invalid token');
-  }
-};
-
-exports.refreshToken = (req, res) => {
-  const { token } = req.body;
-
-  if (!token) {
-    return res.status(400).send('Token is required');
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
-    const newToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    res.json({ token: newToken });
-  } catch (error) {
-    res.status(400).send('Invalid token');
-  }
-};
-
-exports.getPublicUserProfile = async (req, res) => {
-  const userId = req.params.id;
-
-  try {
-    const [rows] = await db.query('SELECT username, email FROM user_profiles WHERE id = ?', [userId]);
-    if (rows.length === 0) {
-      return res.status(404).send('User profile not found');
-    }
-    res.json(rows[0]);
-  } catch (error) {
-    console.error('Error fetching public user profile:', error);
-    res.status(500).send('Error fetching public user profile');
-  }
-};
-
-exports.updateUserProfileWithoutAuth = async (req, res) => {
-  const userId = req.params.id;
-  const { bio, gender, avatar_file } = req.body;
-
-  try {
-    const [result] = await db.query('UPDATE user_profiles SET bio = ?, gender = ?, avatar_file = ? WHERE id = ?', [bio, gender, avatar_file, userId]);
-    if (result.affectedRows === 0) {
-      return res.status(404).send('User profile not found');
-    }
-    res.send('User profile updated successfully');
-  } catch (error) {
     console.error('Error updating user profile:', error);
     res.status(500).send('Error updating user profile');
   }
