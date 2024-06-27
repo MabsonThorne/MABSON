@@ -30,7 +30,13 @@ const ProfileContent = ({ className = "", id }) => {
   }, [id]);
 
   const handleEdit = () => {
-    setEditing(!editing);
+    setEditing(true);
+  };
+
+  const handleCancel = () => {
+    setEditing(false);
+    setNewUserData(userData); // 取消时恢复原数据
+    setAvatarPreview(null); // 清除头像预览
   };
 
   const handleChange = (e) => {
@@ -93,6 +99,7 @@ const ProfileContent = ({ className = "", id }) => {
     .then(() => {
       setUserData({ ...userData, ...newUserData });
       setEditing(false);
+      setAvatarPreview(null); // 清除头像预览
     })
     .catch(error => {
       console.error("Error updating profile:", error);
@@ -226,7 +233,10 @@ const ProfileContent = ({ className = "", id }) => {
                   className="w-full"
                 />
               </label>
-              <button style={buttonStyle} onClick={handleSubmit}>完成</button>
+              <div className="flex justify-between w-full">
+                <button style={buttonStyle} onClick={handleCancel}>取消</button>
+                <button style={buttonStyle} onClick={handleSubmit}>完成</button>
+              </div>
             </>
           ) : (
             <>
@@ -262,11 +272,10 @@ const buttonStyle = {
   backgroundColor: "red",
   color: "white",
   border: "none",
-  padding: "10px 180px", // 扩大按钮长度
+  padding: "10px 90px", // 调整按钮长度
   fontSize: "16px",
   cursor: "pointer",
   borderRadius: "5px",
-  width: "100%",
 };
 
 // 将CSS样式添加到页面的style标签中
