@@ -285,3 +285,13 @@ exports.getBasicUserProfile = async (req, res) => {
     res.status(500).send('Error fetching user profile by ID');
   }
 };
+
+exports.getSearchers = async (req, res) => {
+  try {
+    const [searchers] = await db.query('SELECT id, username, email, avatar_file, bio, rating FROM users WHERE role = ?', ['searcher']);
+    res.json(searchers);
+  } catch (err) {
+    console.error('Error fetching searchers:', err);
+    res.status(500).send('Error fetching searchers');
+  }
+};
