@@ -54,6 +54,11 @@ const ProfileContent = ({ className = "", id }) => {
       });
   }, [id]);
 
+  useEffect(() => {
+    console.log("Current User ID:", currentUserId);
+    console.log("Profile ID:", id);
+  }, [currentUserId, id]);
+
   const handleEdit = () => {
     setEditing(true);
   };
@@ -183,37 +188,6 @@ const ProfileContent = ({ className = "", id }) => {
       <section
         className={`w-[1279px] flex flex-row items-end justify-start gap-[95px] max-w-full text-left text-45xl text-text-primary font-small-text mq750:gap-[47px] mq450:gap-[24px] mq1125:flex-wrap ${className}`}
       >
-        <div className="flex-1 flex flex-col items-start justify-end pt-0 px-0 pb-[23px] box-border max-w-full mq750:min-w-full">
-          <div className="self-stretch flex flex-col items-start justify-start gap-[37px] max-w-full mq450:gap-[18px]">
-            <h1 className="m-0 w-[624px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block max-w-full mq1050:text-32xl mq450:text-19xl">
-              发布过的
-            </h1>
-            <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[30px] min-h-[554px]">
-              {currentItems.map((product, i) => (
-                <div key={i} className="w-[30%]"> {/* 宽度设为30%以确保每行三个 */}
-                  <ProductCard productId={product.id} /> {/* 传递 productId 属性 */}
-                </div>
-              ))}
-            </div>
-            <div className="self-stretch flex flex-row items-center justify-center py-0 px-5 box-border max-w-full text-base gap-[20px]">
-              <button
-                className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2"
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-              >
-                上一页
-              </button>
-              <span>{currentPage} / {Math.ceil(products.length / itemsPerPage)}</span>
-              <button
-                className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2"
-                onClick={handleNextPage}
-                disabled={currentPage === Math.ceil(products.length / itemsPerPage)}
-              >
-                下一页
-              </button>
-            </div>
-          </div>
-        </div>
         <div className="w-[421px] flex flex-col items-start justify-start gap-[31px] min-w-[421px] max-w-full mq750:min-w-full mq450:gap-[15px] mq1125:flex-1">
           <div className="relative self-stretch h-[437px] rounded-71xl max-w-full overflow-hidden shrink-0" onClick={handleAvatarClick} style={{ cursor: 'pointer' }}>
             <label htmlFor="avatar-upload" style={{ cursor: editing ? 'pointer' : 'default' }}>
@@ -310,7 +284,7 @@ const ProfileContent = ({ className = "", id }) => {
                   <p className="m-0">简介: {userData.bio}</p>
                   <p className="m-0">性别: {genderSymbol}</p>
                   <p className="m-0">邮箱: {userData.email}</p>
-                  {currentUserId === id ? (
+                  {currentUserId && currentUserId.toString() === id.toString() ? (
                     <button style={buttonStyle} onClick={handleEdit}>编辑</button>
                   ) : (
                     <button style={buttonStyle} onClick={handleChatClick}>聊一聊</button>
@@ -318,6 +292,37 @@ const ProfileContent = ({ className = "", id }) => {
                 </div>
               </>
             )}
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col items-start justify-end pt-0 px-0 pb-[23px] box-border max-w-full mq750:min-w-full">
+          <div className="self-stretch flex flex-col items-start justify-start gap-[37px] max-w-full mq450:gap-[18px]">
+            <h1 className="m-0 w-[624px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block max-w-full mq1050:text-32xl mq450:text-19xl">
+              发布过的
+            </h1>
+            <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[30px] min-h-[554px]">
+              {currentItems.map((product, i) => (
+                <div key={i} className="w-[30%]"> {/* 宽度设为30%以确保每行三个 */}
+                  <ProductCard productId={product.id} /> {/* 传递 productId 属性 */}
+                </div>
+              ))}
+            </div>
+            <div className="self-stretch flex flex-row items-center justify-center py-0 px-5 box-border max-w-full text-base gap-[20px]">
+              <button
+                className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+              >
+                上一页
+              </button>
+              <span>{currentPage} / {Math.ceil(products.length / itemsPerPage)}</span>
+              <button
+                className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2"
+                onClick={handleNextPage}
+                disabled={currentPage === Math.ceil(products.length / itemsPerPage)}
+              >
+                下一页
+              </button>
+            </div>
           </div>
         </div>
       </section>
