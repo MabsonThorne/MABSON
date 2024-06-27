@@ -1,3 +1,4 @@
+GNU nano 6.2                                                                                                                                                                                                                                                                                                                                                                                                                                            /home/ubuntu/gotong/src/components/FrameComponent4.js                                                                                                                                                                                                                                                                                                                                                                                                                                                      
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
@@ -73,17 +74,17 @@ const FrameComponent4 = ({ className = "" }) => {
       navigate(`/3/${userProfile.id}`);
     }
   }, [navigate, userProfile]);
-
+  
   return (
     <header className={`w-full flex flex-wrap items-center justify-between py-4 px-4 box-border text-left text-29xl text-red font-small-text ${className}`}>
-      <div className="flex flex-row items-center gap-5">
+      <div className="flex flex-row items-center gap-5 header-group">
         <img className="h-24 w-48 object-cover" loading="lazy" alt="Logo" src="/logo1-1@2x.png" />
         <h1 className="m-0 text-inherit leading-6 font-medium">
           <span className="text-red">GO</span>
           <span className="text-black">TONG</span>
         </h1>
       </div>
-      <div className="flex flex-row items-center justify-center gap-6">
+      <div className="flex flex-row items-center justify-center gap-6 header-group">
         <div className="flex items-center">
           <h1 className="m-0 text-xl leading-6 font-medium cursor-pointer" onClick={onHomeClick} style={{ color: 'black' }}>
             首页
@@ -100,7 +101,7 @@ const FrameComponent4 = ({ className = "" }) => {
           </h1>
         </div>
       </div>
-      <div className="flex flex-row items-center justify-end gap-5 text-base">
+      <div className="flex flex-row items-center justify-end gap-5 text-base header-group">
         <div className="shadow-none rounded-lg bg-red flex items-center justify-center py-2.5 px-8 cursor-pointer hover:shadow-md" onClick={onButtonContainerClick}>
           <div className="text-white">消息</div>
         </div>
@@ -154,9 +155,13 @@ const FrameComponent4 = ({ className = "" }) => {
           .flex-wrap {
             flex-wrap: wrap;
           }
-          .flex-row {
-            flex-direction: row;
+          .header-group {
+            width: 100%;
             justify-content: center;
+            margin-bottom: 16px;
+          }
+          .header-group:last-child {
+            margin-bottom: 0;
           }
         }
       `}</style>
