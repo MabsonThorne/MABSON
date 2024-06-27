@@ -11,10 +11,12 @@ const ProfileContent = ({ className = "", id }) => {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [showAvatar, setShowAvatar] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
     if (!id) {
-      console.error("User ID is required");
       setLoading(false);
       return;
     }
@@ -22,7 +24,6 @@ const ProfileContent = ({ className = "", id }) => {
     // 获取当前登录用户的 ID
     axios.get(`http://106.52.158.123:5000/api/profile`, { withCredentials: true })
       .then(response => {
-        console.log("Current User ID:", response.data.id);
         setCurrentUserId(response.data.id);
       })
       .catch(error => {
@@ -32,7 +33,6 @@ const ProfileContent = ({ className = "", id }) => {
     // 获取用户资料
     axios.get(`http://106.52.158.123:5000/api/basic_profile/${id}`, { withCredentials: true })
       .then(response => {
-        console.log("Profile User ID:", id);
         setUserData(response.data);
         setNewUserData(response.data);
         setLoading(false);
@@ -40,6 +40,17 @@ const ProfileContent = ({ className = "", id }) => {
       .catch(error => {
         console.error("Error fetching user profile:", error);
         setLoading(false);
+      });
+
+    // 获取用户的商品数据
+    axios.get(`http://106.52.158.123:5000/api/user_products/${id}`, { withCredentials: true })
+      .then(response => {
+        // 按照 created_at 进行排序
+        const sortedProducts = response.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setProducts(sortedProducts);
+      })
+      .catch(error => {
+        console.error("Error fetching user products:", error);
       });
   }, [id]);
 
@@ -126,6 +137,26 @@ const ProfileContent = ({ className = "", id }) => {
     setShowAvatar(false);
   };
 
+  const handleChatClick = () => {
+    if (currentUserId) {
+      window.location.href = 'http://106.52.158.123:3000/8';
+    } else {
+      window.location.href = 'http://106.52.158.123:3000/4';
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < Math.ceil(products.length / itemsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   if (loading) {
     return <div style={spinnerStyle}>Loading...</div>;
   }
@@ -134,8 +165,13 @@ const ProfileContent = ({ className = "", id }) => {
     return <div>User profile not found</div>;
   }
 
-  const avatarUrl = avatarPreview || `http://106.52.158.123:5000/${userData.avatar_file}`;
+  // 确保路径正确
+  const avatarUrl = avatarPreview || (userData.avatar_file.startsWith('http') ? userData.avatar_file : `http://106.52.158.123:5000/${userData.avatar_file}`);
   const genderSymbol = newUserData.gender === 'male' ? '♂' : '♀';
+
+  // 计算当前页显示的商品
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentItems = products.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <>
@@ -153,15 +189,28 @@ const ProfileContent = ({ className = "", id }) => {
               发布过的
             </h1>
             <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[30px] min-h-[554px]">
-              {Array(6).fill().map((_, i) => (
+              {currentItems.map((product, i) => (
                 <div key={i} className="w-[30%]"> {/* 宽度设为30%以确保每行三个 */}
-                  <ProductCard />
+                  <ProductCard id={product.id} />
                 </div>
               ))}
             </div>
             <div className="self-stretch flex flex-row items-center justify-center py-0 px-5 box-border max-w-full text-base gap-[20px]">
-              <button className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2">上一页</button>
-              <button className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2">下一页</button>
+              <button
+                className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+              >
+                上一页
+              </button>
+              <span>{currentPage} / {Math.ceil(products.length / itemsPerPage)}</span>
+              <button
+                className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2"
+                onClick={handleNextPage}
+                disabled={currentPage === Math.ceil(products.length / itemsPerPage)}
+              >
+                下一页
+              </button>
             </div>
           </div>
         </div>
@@ -261,8 +310,10 @@ const ProfileContent = ({ className = "", id }) => {
                   <p className="m-0">简介: {userData.bio}</p>
                   <p className="m-0">性别: {genderSymbol}</p>
                   <p className="m-0">邮箱: {userData.email}</p>
-                  {currentUserId == id && ( // 检查类型是否匹配
+                  {currentUserId === id ? (
                     <button style={buttonStyle} onClick={handleEdit}>编辑</button>
+                  ) : (
+                    <button style={buttonStyle} onClick={handleChatClick}>聊一聊</button>
                   )}
                 </div>
               </>
