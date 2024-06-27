@@ -191,7 +191,7 @@ const ProfileContent = ({ className = "", id }) => {
             <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-[30px] min-h-[554px]">
               {currentItems.map((product, i) => (
                 <div key={i} className="w-[30%]"> {/* 宽度设为30%以确保每行三个 */}
-                  <ProductCard id={product.id} />
+                  <ProductCard productId={product.id} /> {/* 传递 productId 属性 */}
                 </div>
               ))}
             </div>
