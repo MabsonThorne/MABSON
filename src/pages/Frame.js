@@ -1,7 +1,7 @@
 // pages/Frame.js
 
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "@mui/material";
+import { Button, TextField } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import FrameComponent2 from "../components/FrameComponent2";
 import ProductCard from "../components/ProductCard";
@@ -14,6 +14,7 @@ const Frame = () => {
   const [products, setProducts] = useState([]);
   const [searchers, setSearchers] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchProducts = async () => {
     try {
@@ -48,24 +49,36 @@ const Frame = () => {
   const onTextClick = useCallback(() => {
     navigate("/1");
   }, [navigate]);
-  
-return (
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearchSubmit = () => {
+    // Implement your search logic here
+    console.log("Search term:", searchTerm);
+  };
+
+  return (
     <div className="w-full relative bg-white overflow-hidden flex flex-col items-start justify-start pt-[46px] px-4 pb-12 box-border gap-[100px] leading-normal tracking-normal mq450:gap-[25px] mq750:gap-[50px] mq750:px-10">
       <section className="self-stretch flex flex-col items-start justify-start pt-0 pb-5 gap-8 max-w-full text-left text-xl text-gray-100 font-small-text mq750:gap-[15px]">
         <FrameComponent4 />
         <FrameComponent2 />
         <div className="w-full flex flex-col items-center justify-center py-0 box-border max-w-full">
-          <div className="w-full flex flex-row flex-wrap items-center justify-center gap-6 max-w-full">
-            <div className="flex-1 flex flex-col items-start justify-start pt-4 px-0 pb-0 min-w-[319px] max-w-full">
-              <div className="self-stretch rounded-lg bg-white flex flex-row items-start justify-start py-3.5 px-4 border border-solid border-gainsboro-300">
-                <div className="relative leading-[150%] font-medium inline-block min-w-[40px] text-base">
-                  搜索
-                </div>
-              </div>
+          <div className="w-full flex flex-col mq750:flex-row items-center justify-center gap-6 max-w-full">
+            <div className="flex-1 flex flex-col items-center justify-start min-w-[319px] max-w-full">
+              <TextField
+                variant="outlined"
+                fullWidth
+                placeholder="搜索"
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
             </div>
             <Button
               className="h-[62px] w-[124px]"
               variant="contained"
+              onClick={handleSearchSubmit}
               sx={{
                 textTransform: "none",
                 color: "#fff",
