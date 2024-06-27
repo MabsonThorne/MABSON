@@ -64,7 +64,6 @@ const FrameComponent4 = ({ className = "" }) => {
   const onLogoutClick = useCallback(() => {
     Cookies.remove("authToken");
     setIsLoggedIn(false);
-    navigate("/4");
   }, [navigate]);
 
   const onAvatarClick = useCallback(() => {
