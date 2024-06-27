@@ -109,7 +109,6 @@ const ProfileContent = ({ className = "", id }) => {
 
   const avatarUrl = avatarPreview || `http://106.52.158.123:5000/${userData.avatar_file}`;
   const genderSymbol = newUserData.gender === 'male' ? '♂' : '♀';
-  const genderBorder = newUserData.gender === 'male' ? 'blue' : 'pink';
 
   return (
     <section
@@ -234,15 +233,13 @@ const ProfileContent = ({ className = "", id }) => {
               <h1 className="m-0 self-stretch h-[77px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block mq1050:text-32xl mq450:text-19xl">
                 {userData.username}
               </h1>
-              <h3 className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray-100 mq450:text-lgi mq450:leading-[29px]">
+              <div className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray-100 mq450:text-lgi mq450:leading-[29px] flex flex-col gap-4">
                 <p className="m-0">ID: {userData.id}</p>
                 <p className="m-0">简介: {userData.bio}</p>
-                <p className={`m-0 ${genderBorder === 'blue' ? 'border-blue-500' : 'border-pink-500'} border-2 p-1 rounded`}>
-                  性别: {genderSymbol}
-                </p>
+                <p className="m-0">性别: {genderSymbol}</p>
                 <p className="m-0">邮箱: {userData.email}</p>
                 <button style={buttonStyle} onClick={handleEdit}>编辑</button>
-              </h3>
+              </div>
             </>
           )}
         </div>
