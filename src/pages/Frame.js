@@ -1,5 +1,3 @@
-// pages/Frame.js
-
 import { useCallback, useEffect, useState } from "react";
 import { Button, TextField } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -125,7 +123,7 @@ const Frame = () => {
           {searcherIds.slice(0, 8).map((searcher, index) => (
             <UserCard
               key={index}
-              id={searcher.id}
+              userId={searcher.id}
               propWidth="404px"
               propMinWidth="384px"
             />
@@ -141,7 +139,7 @@ const Frame = () => {
           {randomProductIds.map((product, index) => (
             <ProductCard
               key={index}
-              id={product.id}
+              productId={product.id}
               propWidth="404px"
               propMinWidth="384px"
             />
