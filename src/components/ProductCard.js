@@ -1,27 +1,79 @@
 import { useMemo, useState, useEffect } from "react";
 import PropTypes from "prop-types";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-const ProductCard = ({ className = "", image, productName, productDescription, price, quantity, propWidth, propMinWidth }) => {
-  const cardStyle = useMemo(() => ({ width: propWidth, minWidth: propMinWidth }), [propWidth, propMinWidth]);
+const ProductCard = ({ className = "", productId, propWidth, propMinWidth }) => {
+  const navigate = useNavigate();
+  const cardStyle = useMemo(() => ({
+    width: propWidth,
+    minWidth: propMinWidth,
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19)',
+    borderRadius: '15px' // 添加圆角效果
+  }), [propWidth, propMinWidth]);
+  const [productData, setProductData] = useState({ image: '', product_name: '', product_description: '', price: '', quantity: '' });
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const img = new Image();
-    img.src = image;
-    img.onload = () => setImageLoaded(true);
-  }, [image]);
+    const fetchProductData = async () => {
+      try {
+        const response = await axios.get(`http://106.52.158.123:5000/api/products/${productId}`);
+        if (response.status === 200) {
+          setProductData(response.data);
+          setError(null);  // 清除之前的错误
+        } else {
+          setError('Product not found');
+        }
+      } catch (error) {
+        setError('Error fetching product data');
+        console.error('Error fetching product data:', error);
+      }
+    };
+
+    if (productId) {
+      fetchProductData();
+    } else {
+      setError('Product ID is required');
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    if (productData.image) {
+      const img = new Image();
+      img.src = productData.image;
+      img.onload = () => setImageLoaded(true);
+      img.onerror = () => setError('Error loading image');
+    }
+  }, [productData.image]);
+
+  const handleClick = () => {
+    navigate(`/5/${productId}`);
+  };
 
   return (
-    <div className={`w-[404px] flex flex-col items-start justify-start gap-6 min-w-[384px] max-w-full text-left text-xl text-black font-medium ${className}`} style={cardStyle}>
-      <div className={`self-stretch h-[244px] relative rounded-lg overflow-hidden shrink-0 ${imageLoaded ? 'object-cover' : 'flex items-center justify-center bg-gray-200'}`}>
-        {!imageLoaded && <div className="spinner"></div>}
-        <img className={`self-stretch h-full w-full ${imageLoaded ? 'object-cover' : 'hidden'}`} loading="lazy" alt="" src={image} />
+    <div 
+      onClick={handleClick} 
+      className={`cursor-pointer flex flex-col items-start justify-start gap-6 min-w-[200px] max-w-full text-left text-xl text-black font-medium ${className}`} 
+      style={cardStyle}
+    >
+      <div 
+        className={`w-full relative rounded-lg overflow-hidden shrink-0 ${imageLoaded ? 'object-cover' : 'flex items-center justify-center bg-gray-200'}`} 
+        style={{ height: 'auto', aspectRatio: '16/9' }}
+      >
+        {!imageLoaded && !error && <div className="spinner"></div>}
+        {error && <div className="text-red-500">{error}</div>}
+        <img 
+          className={`w-full ${imageLoaded ? 'object-cover' : 'hidden'}`} 
+          loading="lazy" 
+          alt={productData.product_name} 
+          src={productData.image} 
+        />
       </div>
-      <div className="self-stretch flex flex-col items-start justify-center gap-1">
-        <div className="self-stretch relative leading-[150%]">{productName}</div>
-        <div className="self-stretch relative leading-[150%] text-gray">{productDescription}</div>
-        <div className="self-stretch relative leading-[150%]">价格：{price}</div>
-        <div className="self-stretch relative leading-[150%]">数量：{quantity}</div>
+      <div className="w-full flex flex-col items-start justify-center gap-1">
+        <div className="relative leading-[150%]">{productData.product_name}</div>
+        <div className="relative leading-[150%]">价格：{productData.price}</div>
+        <div className="relative leading-[150%]">数量：{productData.quantity}</div>
       </div>
     </div>
   );
@@ -29,13 +81,9 @@ const ProductCard = ({ className = "", image, productName, productDescription, p
 
 ProductCard.propTypes = {
   className: PropTypes.string,
-  image: PropTypes.string,
-  productName: PropTypes.string,
-  productDescription: PropTypes.string,
-  price: PropTypes.string,
-  quantity: PropTypes.string,
-  propWidth: PropTypes.any,
-  propMinWidth: PropTypes.any,
+  productId: PropTypes.string.isRequired,
+  propWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  propMinWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default ProductCard;
