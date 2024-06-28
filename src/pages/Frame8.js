@@ -34,8 +34,25 @@ const Frame8 = () => {
 
     const fetchUserInfo = async () => {
       try {
-        const response = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${targetUserId}`);
+        const token = Cookies.get('authToken');
+        const response = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${targetUserId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         setUserInfo(response.data);
+
+        await axios.post('http://106.52.158.123:5000/api/contacts', {
+          contact_id: targetUserId,
+          last_message: '',
+          last_message_time: new Date().toISOString()
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        fetchContacts(); // 更新联系人列表
       } catch (error) {
         console.error('Error fetching user info:', error);
       }
@@ -140,19 +157,23 @@ const Frame8 = () => {
                   <div className="font-bold">{contact.username}</div>
                   <div className="text-sm text-gray-500">{contact.last_message}</div>
                 </div>
-                <button className="ml-auto text-red-500" onClick={() => handleContactDelete(contact.contact_id)}>X</button>
+                <button onClick={() => handleContactDelete(contact.contact_id)}>X</button>
               </div>
             ))}
           </div>
         </div>
-        <div className={`flex-1 flex flex-col bg-white ${selectedContact ? 'ml-1/4' : ''}`}>
+        <div className="flex-1 flex flex-col bg-white">
           <div className="flex items-center justify-between p-4 border-b border-gray-300">
             <div className="flex items-center">
-              <img className="w-10 h-10 rounded-full cursor-pointer shadow-md" alt="Avatar" src={userInfo?.avatar_file} />
-              <div className="ml-4">
-                <div className="font-bold">{userInfo?.username}</div>
-                <div className="text-sm text-gray-500">Active 20m ago</div>
-              </div>
+              {selectedContact && (
+                <>
+                  <img className="w-10 h-10 rounded-full cursor-pointer shadow-md" alt="Avatar" src={selectedContact.avatar_file} />
+                  <div className="ml-4">
+                    <div className="font-bold">{selectedContact.username}</div>
+                    <div className="text-sm text-gray-500">Active 20m ago</div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
