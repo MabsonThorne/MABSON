@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import ProductCard from "./ProductCard";
 
 const ProfileContent = ({ className = "", id }) => {
@@ -14,6 +15,7 @@ const ProfileContent = ({ className = "", id }) => {
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!id) {
@@ -49,11 +51,6 @@ const ProfileContent = ({ className = "", id }) => {
         console.error("Error fetching user products:", error);
       });
   }, [id]);
-
-  useEffect(() => {
-    console.log("Current User ID:", currentUserId);
-    console.log("Profile ID:", id);
-  }, [currentUserId, id]);
 
   const handleEdit = () => {
     setEditing(true);
@@ -140,7 +137,7 @@ const ProfileContent = ({ className = "", id }) => {
 
   const handleChatClick = () => {
     if (currentUserId) {
-      window.location.href = 'http://106.52.158.123:3000/8';
+      navigate(`/chat/${currentUserId}`, { state: { otherUserId: id } });
     } else {
       window.location.href = 'http://106.52.158.123:3000/4';
     }
