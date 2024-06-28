@@ -13,7 +13,7 @@ const ProfileContent = ({ className = "", id }) => {
   const [showAvatar, setShowAvatar] = useState(false);
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
 
   useEffect(() => {
     if (!id) {
@@ -21,7 +21,6 @@ const ProfileContent = ({ className = "", id }) => {
       return;
     }
 
-    // 获取当前登录用户的 ID
     axios.get(`http://106.52.158.123:5000/api/profile`, { withCredentials: true })
       .then(response => {
         setCurrentUserId(response.data.id);
@@ -30,7 +29,6 @@ const ProfileContent = ({ className = "", id }) => {
         console.error("Error fetching current user profile:", error);
       });
 
-    // 获取用户资料
     axios.get(`http://106.52.158.123:5000/api/basic_profile/${id}`, { withCredentials: true })
       .then(response => {
         setUserData(response.data);
@@ -42,10 +40,8 @@ const ProfileContent = ({ className = "", id }) => {
         setLoading(false);
       });
 
-    // 获取用户的商品数据
     axios.get(`http://106.52.158.123:5000/api/user_products/${id}`, { withCredentials: true })
       .then(response => {
-        // 按照 created_at 进行排序
         const sortedProducts = response.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         setProducts(sortedProducts);
       })
@@ -65,8 +61,8 @@ const ProfileContent = ({ className = "", id }) => {
 
   const handleCancel = () => {
     setEditing(false);
-    setNewUserData(userData); // 取消时恢复原数据
-    setAvatarPreview(null); // 清除头像预览
+    setNewUserData(userData);
+    setAvatarPreview(null);
   };
 
   const handleChange = (e) => {
@@ -124,8 +120,8 @@ const ProfileContent = ({ className = "", id }) => {
     .then(() => {
       setUserData({ ...userData, ...newUserData });
       setEditing(false);
-      setAvatarPreview(null); // 清除头像预览
-      window.location.reload(); // 刷新页面
+      setAvatarPreview(null);
+      window.location.reload();
     })
     .catch(error => {
       console.error("Error updating profile:", error);
@@ -170,24 +166,20 @@ const ProfileContent = ({ className = "", id }) => {
     return <div>User profile not found</div>;
   }
 
-  // 确保路径正确
   const avatarUrl = avatarPreview || (userData.avatar_file.startsWith('http') ? userData.avatar_file : `http://106.52.158.123:5000/${userData.avatar_file}`);
   const genderSymbol = newUserData.gender === 'male' ? '♂' : '♀';
 
-  // 计算当前页显示的商品
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentItems = products.slice(startIndex, startIndex + itemsPerPage);
 
   return (
-    <>
+    <div className={`profile-content-container ${className}`}>
       {showAvatar && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75" onClick={handleCloseAvatar}>
           <img src={avatarUrl} alt="User avatar" className="object-cover w-1/2 h-1/2" />
         </div>
       )}
-      <section
-        className={`w-[90%] mx-auto flex flex-row items-start justify-between gap-10 max-w-full text-left text-45xl text-text-primary font-small-text mq750:gap-8 mq450:gap-4 mq1125:flex-wrap ${className}`}
-      >
+      <section className="profile-info">
         <div className="flex flex-col items-start justify-start gap-6 min-w-[300px] max-w-full">
           <div className="relative w-full h-[437px] rounded-71xl max-w-full overflow-hidden shrink-0" onClick={handleAvatarClick} style={{ cursor: 'pointer' }}>
             <label htmlFor="avatar-upload" style={{ cursor: editing ? 'pointer' : 'default' }}>
@@ -294,37 +286,99 @@ const ProfileContent = ({ className = "", id }) => {
             )}
           </div>
         </div>
-        <div className="flex-1 flex flex-col items-start justify-start gap-6 max-w-full">
-          <h1 className="m-0 self-stretch relative text-inherit tracking-[-0.02em] font-bold font-inherit text-32xl">
-            发布过的
-          </h1>
-          <div className="self-stretch flex flex-row flex-wrap items-start justify-start gap-6 min-h-[554px]">
-            {currentItems.map((product, i) => (
-              <div key={i} className="w-[30%]"> {/* 宽度设为30%以确保每行三个 */}
-                <ProductCard productId={product.id} /> {/* 传递 productId 属性 */}
-              </div>
-            ))}
-          </div>
-          <div className="self-stretch flex flex-row items-center justify-center py-0 px-5 box-border max-w-full text-base gap-4">
-            <button
-              className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2"
-              onClick={handlePreviousPage}
-              disabled={currentPage === 1}
-            >
-              上一页
-            </button>
-            <span>{currentPage} / {Math.ceil(products.length / itemsPerPage)}</span>
-            <button
-              className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2"
-              onClick={handleNextPage}
-              disabled={currentPage === Math.ceil(products.length / itemsPerPage)}
-            >
-              下一页
-            </button>
-          </div>
+      </section>
+      <section className="product-list">
+        <h1 className="m-0 self-stretch relative text-inherit tracking-[-0.02em] font-bold font-inherit text-32xl">
+          发布过的
+        </h1>
+        <div className="self-stretch flex flex-row flex-wrap items-start justify-center gap-6 min-h-[554px]">
+          {currentItems.map((product, i) => (
+            <div key={i} className="product-card">
+              <ProductCard productId={product.id} />
+            </div>
+          ))}
+        </div>
+        <div className="self-stretch flex flex-row items-center justify-center py-0 px-5 box-border max-w-full text-base gap-4">
+          <button
+            className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2"
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+          >
+            上一页
+          </button>
+          <span>{currentPage} / {Math.ceil(products.length / itemsPerPage)}</span>
+          <button
+            className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2"
+            onClick={handleNextPage}
+            disabled={currentPage === Math.ceil(products.length / itemsPerPage)}
+          >
+            下一页
+          </button>
         </div>
       </section>
-    </>
+      <style jsx>{`
+        .profile-content-container {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: space-between;
+        }
+
+        .profile-info {
+          flex: 1;
+          min-width: 300px;
+          margin: 10px;
+        }
+
+        .product-list {
+          flex: 2;
+          min-width: 300px;
+          margin: 10px;
+        }
+
+        .product-card {
+          width: calc(25% - 24px);
+          box-sizing: border-box;
+        }
+
+        .pagination {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+          margin-top: 20px;
+        }
+
+        .pagination-button {
+          background-color: #e0e0e0;
+          border: none;
+          padding: 10px;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+          .product-card {
+            width: calc(33.33% - 24px);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .product-card {
+            width: calc(50% - 24px);
+          }
+        }
+
+        @media (max-width: 480px) {
+          .profile-info, .product-list {
+            flex: 1 1 100%;
+            margin: 0;
+          }
+          .product-card {
+            width: calc(50% - 12px);
+          }
+        }
+      `}</style>
+    </div>
   );
 };
 
@@ -342,7 +396,7 @@ const buttonStyle = {
   backgroundColor: "red",
   color: "white",
   border: "none",
-  padding: "10px 90px", // 调整按钮长度
+  padding: "10px 90px",
   fontSize: "16px",
   cursor: "pointer",
   borderRadius: "5px",
@@ -361,7 +415,6 @@ const smallButtonStyle = {
   textAlign: "center",
 };
 
-// 将CSS样式添加到页面的style标签中
 const spinnerKeyframes = `
   @keyframes spin {
     0% { transform: rotate(0deg); }
