@@ -114,7 +114,7 @@ const Frame8 = () => {
   };
 
   const handleBackClick = () => {
-    navigate(-1);
+    setSelectedContact(null);
   };
 
   const handleSellClick = () => {
@@ -158,11 +158,19 @@ const Frame8 = () => {
     }
   };
 
+  const handleShowUserInfo = () => {
+    setShowUserInfo(true);
+  };
+
+  const handleHideUserInfo = () => {
+    setShowUserInfo(false);
+  };
+
   return (
     <div className="relative flex flex-col h-screen w-full bg-gray-100">
       <FrameComponent4 />
       <div className="flex-1 flex p-5 box-border border-t border-gray-300">
-        <div className="transition-transform duration-300 w-1/4 border-r border-gray-300">
+        <div className="transition-transform duration-1000 w-1/4 border-r border-gray-300">
           <div className="flex items-center justify-between p-4 border-b border-gray-300">
             <div className="cursor-pointer text-xl bg-gray-200 rounded-full p-2" onClick={handleBackClick}>
               {"<"}
@@ -191,15 +199,19 @@ const Frame8 = () => {
           </div>
           <div className="overflow-y-auto p-4">
             {contacts.map((contact, index) => (
-              <div key={index} className="flex items-center p-2 border-b border-gray-200 relative">
+              <div
+                key={index}
+                className={`flex items-center p-2 border-b border-gray-200 relative cursor-pointer ${selectedContact?.contact_id === contact.contact_id ? "bg-gray-200" : ""}`}
+                onClick={() => handleSelectContact(contact)}
+              >
                 <img className="w-10 h-10 rounded-full mr-4" alt="Avatar" src={contact.avatar_file} />
-                <div className="flex flex-col" onClick={() => handleSelectContact(contact)}>
+                <div className="flex flex-col">
                   <div className="font-bold">{contact.username}</div>
                   <div className="text-sm text-gray-500">{contact.last_message}</div>
                 </div>
                 <button
                   className="absolute right-0 p-2 text-red-500"
-                  onClick={() => handleDeleteContact(contact.contact_id)}
+                  onClick={(e) => { e.stopPropagation(); handleDeleteContact(contact.contact_id); }}
                 >
                   X
                 </button>
@@ -207,14 +219,14 @@ const Frame8 = () => {
             ))}
           </div>
         </div>
-        <div className={`flex-1 flex flex-col bg-white transition-transform duration-300 ${selectedContact ? "ml-1/4" : ""}`}>
+        <div className={`flex-1 flex flex-col bg-white transition-transform duration-1000 ${selectedContact ? "ml-1/4" : ""}`}>
           <div className="flex items-center justify-between p-4 border-b border-gray-300">
-            <div className="cursor-pointer text-xl">
+            <div className="cursor-pointer text-xl" onClick={handleBackClick}>
               {selectedContact ? "<" : ">"}
             </div>
             {selectedContact && (
-              <div className="flex items-center">
-                <img className="w-10 h-10 rounded-full cursor-pointer shadow-md" alt="Avatar" src={selectedContact.avatar_file} />
+              <div className="flex items-center cursor-pointer" onClick={handleShowUserInfo}>
+                <img className="w-10 h-10 rounded-full shadow-md" alt="Avatar" src={selectedContact.avatar_file} />
                 <div className="ml-4">
                   <div className="font-bold">{selectedContact.username}</div>
                   <div className="text-sm text-gray-500">Active 20m ago</div>
@@ -258,7 +270,14 @@ const Frame8 = () => {
               disableElevation
               variant="contained"
               onClick={handleSendMessage}
-              sx={{ textTransform: "none", backgroundColor: "#ff0000", "&:hover": { backgroundColor: "#ff0000" } }}
+              sx={{ 
+                textTransform: "none", 
+                backgroundColor: "#ff0000", 
+                "&:hover": { 
+                  backgroundColor: "#ff0000",
+                  boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)" 
+                } 
+              }}
             >
               发送
             </Button>
@@ -267,20 +286,27 @@ const Frame8 = () => {
             <div className="icon-button ml-2 image-icon"></div>
           </div>
         </div>
-        {showUserInfo && userInfo && (
-          <div className={`fixed top-0 right-0 h-full transition-transform duration-300 transform ${showUserInfo ? "translate-x-0" : "translate-x-full"} bg-white border-l border-gray-300 shadow-lg p-4 w-1/3`}>
+        {showUserInfo && (
+          <div className={`fixed top-0 right-0 h-full transition-transform duration-1000 transform ${showUserInfo ? "translate-x-0" : "translate-x-full"} bg-white border-l border-gray-300 shadow-lg p-4 w-1/3`}>
             <div className="flex flex-col items-center">
-              <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo.avatar_file} />
-              <div className="text-lg font-bold mb-2">{userInfo.username}</div>
+              <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
+              <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
               <div className="text-sm text-gray-500 mb-4">Active 20m ago</div>
               <Button
                 className="w-full bg-red-500 text-white rounded-full"
                 disableElevation
                 variant="contained"
                 onClick={handleSellClick}
-                sx={{ textTransform: "none", backgroundColor: "#ff0000", "&:hover": { backgroundColor: "#ff0000" } }}
+                sx={{ 
+                  textTransform: "none", 
+                  backgroundColor: "#ff0000", 
+                  "&:hover": { 
+                    backgroundColor: "#ff0000",
+                    boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)" 
+                  } 
+                }}
               >
-                他卖过的
+                {userInfo?.gender === "female" ? "她卖过的" : "他卖过的"}
               </Button>
             </div>
           </div>
@@ -323,7 +349,7 @@ const Frame8 = () => {
           box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
         }
       `}</style>
-      {showUserInfo && <div className="fixed-overlay" onClick={() => setShowUserInfo(!showUserInfo)}></div>}
+      {showUserInfo && <div className="fixed-overlay" onClick={handleHideUserInfo}></div>}
     </div>
   );
 };
