@@ -2,6 +2,7 @@ import { useCallback, useState, useEffect } from "react";
 import { TextField, Button } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import FrameComponent4 from "../components/FrameComponent4";
 
 const Frame8 = () => {
   const navigate = useNavigate();
@@ -37,6 +38,12 @@ const Frame8 = () => {
     }
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
+  };
+
   const handleBackClick = useCallback(() => {
     navigate(-1);
   }, [navigate]);
@@ -54,399 +61,157 @@ const Frame8 = () => {
   };
 
   return (
-    <div className="frame8-container">
-      <div className={`chat-records ${showChatRecords ? 'show' : ''}`}>
-        <div className="header">
-          <div className="back-button" onClick={toggleChatRecords}>
-            {showChatRecords ? '<' : '>'}
+    <div className="relative flex flex-col h-screen w-full bg-gray-100">
+      <FrameComponent4 />
+      <div className="flex-1 flex p-5 box-border border-t border-gray-300">
+        <div className={`transition-transform duration-300 ${showChatRecords ? 'w-1/4 border-r border-gray-300' : 'w-0 overflow-hidden'}`}>
+          <div className="flex items-center justify-between p-4 border-b border-gray-300">
+            <div className="cursor-pointer text-xl bg-gray-200 rounded-full p-2" onClick={handleBackClick}>
+              {'<'}
+            </div>
+            <div className="text-lg font-bold">沟通过的人</div>
           </div>
-          <div className="title">沟通过的人</div>
-          <TextField
-            className="search-chats"
-            placeholder="Search chats"
-            variant="outlined"
-            InputProps={{
-              startAdornment: (
-                <img width="24px" height="24px" src="/search.svg" alt="Search" />
-              ),
-            }}
-            sx={{
-              "& fieldset": { borderColor: "#e0e0e0" },
-              "& .MuiInputBase-root": {
-                height: "40px",
-                backgroundColor: "#fff",
-                paddingLeft: "12px",
-                borderRadius: "8px",
-              },
-              "& .MuiInputBase-input": {
-                paddingLeft: "12px",
-                color: "#828282",
-              },
-            }}
-          />
+          <div className="p-4 border-b border-gray-300">
+            <TextField
+              className="w-full"
+              placeholder="Search chats"
+              variant="outlined"
+              sx={{
+                "& fieldset": { borderColor: "#e0e0e0" },
+                "& .MuiInputBase-root": {
+                  height: "40px",
+                  backgroundColor: "#fff",
+                  paddingLeft: "12px",
+                  borderRadius: "8px",
+                },
+                "& .MuiInputBase-input": {
+                  paddingLeft: "12px",
+                  color: "#828282",
+                },
+              }}
+            />
+          </div>
+          <div className="overflow-y-auto p-4">
+            {chatMessages.map((chat, index) => (
+              <div key={index} className="flex items-center p-2 border-b border-gray-200">
+                <img className="w-10 h-10 rounded-full mr-4" alt="Avatar" src={chat.avatar} />
+                <div className="flex flex-col">
+                  <div className="font-bold">{chat.name}</div>
+                  <div className="text-sm text-gray-500">{chat.text}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="chat-list">
-          {chatMessages.map((chat, index) => (
-            <div key={index} className="chat-item">
-              <img className="avatar" alt="Avatar" src={chat.avatar} />
-              <div className="chat-details">
-                <div className="chat-name">{chat.name}</div>
-                <div className="chat-message">{chat.text}</div>
+        <div className={`flex-1 flex flex-col bg-white transition-transform duration-300 ${showChatRecords ? 'ml-1/4' : ''}`}>
+          <div className="flex items-center justify-between p-4 border-b border-gray-300">
+            <div className="cursor-pointer text-xl" onClick={toggleChatRecords}>
+              {showChatRecords ? '<' : '>'}
+            </div>
+            <div className="flex items-center">
+              <img className="w-10 h-10 rounded-full cursor-pointer shadow-md" alt="Avatar" src={userInfo?.avatar_file} onClick={toggleUserInfo} />
+              <div className="ml-4">
+                <div className="font-bold">{userInfo?.username}</div>
+                <div className="text-sm text-gray-500">Active 20m ago</div>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-      <div className="chat-box">
-        <div className="chat-header">
-          <div className="back-button" onClick={toggleUserInfo}>
-            {showUserInfo ? '<' : '>'}
           </div>
-          <img className="avatar button" alt="Avatar" src={userInfo?.avatar_file} onClick={toggleUserInfo} />
-          <div className="chat-info">
-            <div className="chat-name">{userInfo?.username}</div>
-            <div className="chat-status">Active 20m ago</div>
+          <div className="flex-1 overflow-y-auto p-4">
+            {chatMessages.map((message, index) => (
+              <div key={index} className={`flex ${message.sender === 'self' ? 'justify-end' : 'justify-start'} mb-4`}>
+                <div className={`p-4 rounded-lg ${message.sender === 'self' ? 'bg-red-200 text-white' : 'bg-gray-200 text-black'}`}>
+                  {message.text}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center p-4 border-t border-gray-300">
+            <TextField
+              className="flex-1"
+              placeholder="Enter your message"
+              variant="outlined"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              sx={{
+                "& fieldset": { borderColor: "#e0e0e0" },
+                "& .MuiInputBase-root": {
+                  backgroundColor: "#fff",
+                  borderRadius: "8px",
+                },
+                "& .MuiInputBase-input": {
+                  paddingLeft: "12px",
+                  color: "#828282",
+                },
+              }}
+            />
+            <Button
+              className="ml-2 bg-red-500 text-white rounded-full p-2"
+              onClick={handleSendMessage}
+              sx={{ textTransform: 'none', backgroundColor: '#ff0000', '&:hover': { backgroundColor: '#ff0000' } }}
+            >
+              发送
+            </Button>
+            <div className="icon-button ml-2 mic-icon"></div>
+            <div className="icon-button ml-2 emoji-icon"></div>
+            <div className="icon-button ml-2 image-icon"></div>
           </div>
         </div>
-        <div className="chat-messages">
-          {chatMessages.map((message, index) => (
-            <div key={index} className={`chat-message ${message.sender}`}>
-              <div className="message-bubble">{message.text}</div>
-            </div>
-          ))}
+        <div className={`fixed top-0 right-0 h-full transition-transform duration-300 transform ${showUserInfo ? 'translate-x-0' : 'translate-x-full'} bg-white border-l border-gray-300 shadow-lg p-4 w-1/3`}>
+          <div className="flex flex-col items-center">
+            <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
+            <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
+            <div className="text-sm text-gray-500 mb-4">Active 20m ago</div>
+            <Button
+              className="w-full bg-red-500 text-white rounded-full"
+              disableElevation
+              variant="contained"
+              onClick={handleSellClick}
+              sx={{ textTransform: 'none', backgroundColor: '#ff0000', '&:hover': { backgroundColor: '#ff0000' } }}
+            >
+              他卖过的
+            </Button>
+          </div>
         </div>
-        <div className="chat-input">
-          <TextField
-            className="message-input"
-            placeholder="Enter your message"
-            variant="outlined"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            sx={{
-              "& fieldset": { borderColor: "#e0e0e0" },
-              "& .MuiInputBase-root": {
-                backgroundColor: "#fff",
-                borderRadius: "8px",
-              },
-              "& .MuiInputBase-input": {
-                paddingLeft: "12px",
-                color: "#828282",
-              },
-            }}
-          />
-          <Button className="send-button" onClick={handleSendMessage}>发送</Button>
-          <div className="icon-button"><MicIcon /></div>
-          <div className="icon-button"><EmojiIcon /></div>
-          <div className="icon-button"><ImageIcon /></div>
-        </div>
-      </div>
-      <div className={`user-info ${showUserInfo ? 'show' : ''}`}>
-        <img className="user-avatar" alt="User Avatar" src={userInfo?.avatar_file} />
-        <div className="user-name">{userInfo?.username}</div>
-        <div className="user-status">Active 20m ago</div>
-        <Button
-          className="sell-button"
-          disableElevation
-          variant="contained"
-          onClick={handleSellClick}
-          sx={{
-            textTransform: "none",
-            color: "#fff",
-            fontSize: "16px",
-            background: "#ff0000",
-            borderRadius: "8px",
-            "&:hover": { background: "#ff0000" },
-            height: 40,
-          }}
-        >
-          他卖过的
-        </Button>
       </div>
       <style jsx>{`
-        .frame8-container {
-          display: flex;
-          width: 100%;
-          height: 100vh;
-          background-color: #f5f5f5;
-          padding: 20px;
-          box-sizing: border-box;
-        }
-
-        .chat-records {
-          width: 25%;
-          background-color: white;
-          border-right: 1px solid #e0e0e0;
-          padding: 10px;
-          box-sizing: border-box;
-          display: flex;
-          flex-direction: column;
-          overflow-y: auto;
-          transform: translateX(-100%);
-          transition: transform 0.3s ease;
-        }
-
-        .chat-records.show {
-          transform: translateX(0);
-        }
-
-        .header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding-bottom: 10px;
-          border-bottom: 1px solid #e0e0e0;
-        }
-
-        .back-button {
-          cursor: pointer;
-          font-size: 24px;
-        }
-
-        .title {
-          font-size: 16px;
-          font-weight: bold;
-        }
-
-        .search-chats {
-          margin-left: auto;
-        }
-
-        .chat-list {
-          margin-top: 10px;
-          flex: 1;
-          overflow-y: auto;
-        }
-
-        .chat-item {
-          display: flex;
-          align-items: center;
-          padding: 10px 0;
-          border-bottom: 1px solid #e0e0e0;
-        }
-
-        .avatar {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          margin-right: 10px;
-        }
-
-        .chat-details {
-          flex: 1;
-        }
-
-        .chat-name {
-          font-size: 14px;
-          font-weight: bold;
-        }
-
-        .chat-message {
-          font-size: 12px;
-          color: #828282;
-        }
-
-        .chat-box {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          padding: 10px;
-          background-color: white;
-          height: 100%;
-        }
-
-        .chat-header {
-          display: flex;
-          align-items: center;
-          padding-bottom: 10px;
-          border-bottom: 1px solid #e0e0e0;
-        }
-
-        .chat-info {
-          margin-left: 10px;
-        }
-
-        .chat-name {
-          font-size: 14px;
-          font-weight: bold;
-        }
-
-        .chat-status {
-          font-size: 12px;
-          color: #828282;
-        }
-
-        .chat-messages {
-          flex: 1;
-          padding: 10px 0;
-          overflow-y: auto;
-        }
-
-        .chat-message {
-          margin-bottom: 10px;
-        }
-
-        .chat-message.self .message-bubble {
-          background-color: #ed9898;
-          color: white;
-          align-self: flex-end;
-        }
-
-        .chat-message.other .message-bubble {
-          background-color: #e0e0e0;
-          color: black;
-          align-self: flex-start;
-        }
-
-        .message-bubble {
-          max-width: 70%;
-          padding: 10px;
-          border-radius: 15px;
-          font-size: 14px;
-        }
-
-        .chat-input {
-          display: flex;
-          align-items: center;
-          padding-top: 10px;
-          border-top: 1px solid #e0e0e0;
-        }
-
-        .message-input {
-          flex: 1;
-          margin-right: 10px;
-        }
-
-        .send-button {
-          background-color: red;
-          color: white;
-          border-radius: 20px;
-          padding: 10px 20px;
-          margin-right: 10px;
-        }
-
         .icon-button {
           cursor: pointer;
           width: 24px;
           height: 24px;
-          margin-left: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-        }
-
-        .user-info {
-          width: 25%;
-          background-color: white;
-          border-left: 1px solid #e0e0e0;
-          padding: 10px;
-          box-sizing: border-box;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: flex-start;
-          gap: 20px;
-          padding-top: 40px; /* Adding padding to position the content away from the top */
-          transform: translateX(100%);
-          transition: transform 0.3s ease;
-        }
-
-        .user-info.show {
-          transform: translateX(0);
-        }
-
-        .user-avatar {
-          width: 80px;
-          height: 80px;
+          border: 1px solid #000;
           border-radius: 50%;
-          margin-bottom: 10px;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .user-name {
-          font-size: 16px;
-          font-weight: bold;
-          margin-bottom: 5px;
-        }
-
-        .user-status {
-          font-size: 12px;
-          color: #828282;
-        }
-
-        .sell-button {
-          width: 100%;
-        }
-
-        @media (max-width: 768px) {
-          .frame8-container {
-            flex-direction: column;
-            height: auto;
-          }
-
-          .chat-records,
-          .user-info {
-            width: 100%;
-            order: 1;
-            height: auto;
-          }
-
-          .chat-box {
-            width: 100%;
-            order: 2;
-            height: auto;
-          }
-
-          .chat-input {
-            flex-direction: column;
-          }
-
-          .message-input {
-            margin-right: 0;
-            margin-bottom: 10px;
-          }
-
-          .icon-button {
-            margin-left: 0;
-          }
-        }
-      `}</style>
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        .button {
-          cursor: pointer;
-          transition: box-shadow 0.3s ease;
-        }
-        .button:hover {
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        .back-button:before {
-          content: '<';
-          display: inline-block;
-          margin-right: 5px;
-        }
-        .icon-button:before {
-          display: inline-block;
-          font-size: 24px;
-          color: #000;
-        }
-        .icon-button:first-of-type:before {
+        .icon-button.mic-icon::before {
           content: '🎤';
         }
-        .icon-button:nth-of-type(2):before {
+
+        .icon-button.emoji-icon::before {
           content: '😀';
         }
-        .icon-button:nth-of-type(3):before {
+
+        .icon-button.image-icon::before {
           content: '📷';
         }
+
+        .fixed-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 10;
+        }
+
+        .shadow-lg {
+          box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+        }
       `}</style>
+      {showUserInfo && <div className="fixed-overlay" onClick={toggleUserInfo}></div>}
     </div>
   );
 };
