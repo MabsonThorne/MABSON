@@ -32,7 +32,11 @@ const Frame8 = () => {
           }
         });
         console.log(`Fetched contacts:`, response.data);
-        setContacts(response.data);
+        const contactDetails = await Promise.all(response.data.map(async (contact) => {
+          const userResponse = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${contact.contact_id}`);
+          return { ...contact, ...userResponse.data };
+        }));
+        setContacts(contactDetails.sort((a, b) => new Date(b.last_message_time) - new Date(a.last_message_time)));
       } catch (error) {
         console.error("Error fetching contacts:", error);
       }
