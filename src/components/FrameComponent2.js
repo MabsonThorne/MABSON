@@ -13,11 +13,22 @@ const FrameComponent2 = memo(({ className = "" }) => {
   useEffect(() => {
     const token = Cookies.get('authToken');
     console.log('FrameComponent2 token:', token); // Debug log
-    if (token) {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
+    setIsLoggedIn(!!token);
+  }, []);
+
+  useEffect(() => {
+    const handleCookieChange = () => {
+      const token = Cookies.get('authToken');
+      setIsLoggedIn(!!token);
+    };
+
+    // Listen for cookie changes
+    const cookieObserver = new MutationObserver(handleCookieChange);
+    cookieObserver.observe(document, { attributes: true, subtree: true });
+
+    return () => {
+      cookieObserver.disconnect();
+    };
   }, []);
 
   const onButtonClick = useCallback(() => {
