@@ -2,12 +2,14 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { TextField, Button } from "@mui/material";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import FrameComponent4 from "../components/FrameComponent4";
 
 const Frame8 = () => {
   const navigate = useNavigate();
-  const { id: targetUserId } = useParams(); // 获取 URL 中的目标用户 ID
+  const { id: userId } = useParams(); // 获取 URL 中的 userId
+  const location = useLocation();
+  const { contact_id } = location.state; // 从传递的 state 中获取 contact_id
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
@@ -19,6 +21,10 @@ const Frame8 = () => {
   useEffect(() => {
     const fetchContacts = async () => {
       const token = Cookies.get("authToken");
+      if (!token) {
+        console.error("No auth token found");
+        return;
+      }
       console.log(`Fetching contacts with token: ${token}`);
       try {
         const response = await axios.get("http://106.52.158.123:5000/api/contacts", {
@@ -34,24 +40,20 @@ const Frame8 = () => {
     };
 
     const fetchUserInfo = async () => {
-      if (!targetUserId) {
-        console.error("No targetUserId provided");
+      const token = Cookies.get("authToken");
+      if (!token) {
+        console.error("No auth token found");
         return;
       }
-      const token = Cookies.get("authToken");
-      console.log(`Fetching user info for user ID: ${targetUserId} with token: ${token}`);
+      console.log(`Fetching user info for user ID: ${contact_id} with token: ${token}`);
       try {
-        const response = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${targetUserId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${contact_id}`);
         console.log("Fetched user info:", response.data);
         setUserInfo(response.data);
 
         // Add contact to the database if not exists
         await axios.post(`http://106.52.158.123:5000/api/contacts`, {
-          contact_id: targetUserId,
+          contact_id: contact_id,
           last_message: "",
           last_message_time: new Date().toISOString()
         }, {
@@ -68,6 +70,10 @@ const Frame8 = () => {
 
     const fetchCurrentUser = async () => {
       const token = Cookies.get("authToken");
+      if (!token) {
+        console.error("No auth token found");
+        return;
+      }
       console.log(`Fetching current user with token: ${token}`);
       try {
         const response = await axios.get("http://106.52.158.123:5000/api/profile", {
@@ -85,21 +91,38 @@ const Frame8 = () => {
     fetchContacts();
     fetchUserInfo(); // 调用 fetchUserInfo 确保获取到目标用户的信息
     fetchCurrentUser();
-  }, [targetUserId]); // 确保目标用户 ID 变化时重新获取信息
+  }, [contact_id]); // 确保目标用户 ID 变化时重新获取信息
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     const token = Cookies.get("authToken");
-    if (message.trim()) {
-      axios.post(`http://106.52.158.123:5000/api/chat/${targetUserId}`, { message }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      .then(response => {
-        setChatMessages([...chatMessages, { sender_id: "self", message }]);
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
+    if (message.trim() && selectedContact) {
+      try {
+        await axios.post(`http://106.52.158.123:5000/api/chat/${selectedContact.contact_id}`, { message }, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setChatMessages([...chatMessages, { sender_id: currentUserId, message }]);
         setMessage("");
-      })
-      .catch(error => console.error("Error sending message:", error));
+
+        // Update last_message and last_message_time in contacts
+        await axios.put(`http://106.52.158.123:5000/api/contacts/${selectedContact.contact_id}`, {
+          last_message: message,
+          last_message_time: new Date().toISOString()
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        fetchContacts(); // Refresh contacts to update the last message
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
     }
   };
 
@@ -114,14 +137,17 @@ const Frame8 = () => {
   };
 
   const handleSellClick = () => {
-    navigate(`/3/${targetUserId}`);
+    navigate(`/3/${selectedContact.contact_id}`);
   };
 
   const handleSelectContact = (contact) => {
     setSelectedContact(contact);
     setChatMessages([]); // Reset chat messages
-    // Fetch chat messages for the selected contact
     const token = Cookies.get("authToken");
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
     axios.get(`http://106.52.158.123:5000/api/chat/${contact.contact_id}`, {
       headers: {
         Authorization: `Bearer ${token}`
@@ -135,6 +161,10 @@ const Frame8 = () => {
 
   const handleDeleteContact = async (contactId) => {
     const token = Cookies.get("authToken");
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
     try {
       await axios.delete(`http://106.52.158.123:5000/api/contacts/${contactId}`, {
         headers: {
@@ -182,7 +212,7 @@ const Frame8 = () => {
             {contacts.map((contact, index) => (
               <div key={index} className="flex items-center p-2 border-b border-gray-200 relative">
                 <img className="w-10 h-10 rounded-full mr-4" alt="Avatar" src={contact.avatar_file} />
-                <div className="flex flex-col">
+                <div className="flex flex-col" onClick={() => handleSelectContact(contact)}>
                   <div className="font-bold">{contact.username}</div>
                   <div className="text-sm text-gray-500">{contact.last_message}</div>
                 </div>
