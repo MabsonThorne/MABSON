@@ -3,6 +3,7 @@ import { Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const paymentMethodsOrder = ["支付宝", "微信支付", "PayPal"];
 
@@ -47,6 +48,7 @@ const FrameComponent7 = ({ className = "", productId }) => {
         setUserId(response.data.id);
       } catch (error) {
         console.error("Error fetching user id:", error);
+        setUserId(null);
       }
     };
 
@@ -115,7 +117,9 @@ const FrameComponent7 = ({ className = "", productId }) => {
   };
 
   const onButtonClick = useCallback(() => {
-    if (userId) {
+    if (!userId) {
+      navigate("/4"); // 未登录状态跳转到登录页面
+    } else {
       navigate(`/chat/${userId}`, { state: { targetUserId: productData.user_id } });
     }
   }, [navigate, userId, productData.user_id]);
@@ -173,10 +177,15 @@ const FrameComponent7 = ({ className = "", productId }) => {
   };
 
   return (
-    <div className={`self-stretch flex flex-row items-start justify-start gap-[140px] max-w-full text-left text-5xl text-text-primary font-small-text lg:flex-wrap lg:gap-[70px] mq750:gap-[35px] mq450:gap-[17px] ${className}`}>
+    <div
+      className={`self-stretch flex flex-row items-start justify-start gap-[140px] max-w-full text-left text-5xl text-text-primary font-small-text lg:flex-wrap lg:gap-[70px] mq750:gap-[35px] mq450:gap-[17px] ${className}`}
+    >
       <div className="flex-1 flex flex-col items-start justify-start gap-[80px] min-w-[406px] max-w-full mq750:gap-[40px] mq750:min-w-full mq450:gap-[20px]">
         {editing ? (
-          <button className="self-stretch h-[613px] relative rounded-xl max-w-full overflow-hidden shrink-0 flex items-center justify-center bg-gray-200 shadow-lg" onClick={() => document.getElementById("image-upload").click()}>
+          <button
+            className="self-stretch h-[613px] relative rounded-xl max-w-full overflow-hidden shrink-0 flex items-center justify-center bg-gray-200 shadow-lg"
+            onClick={() => document.getElementById("image-upload").click()}
+          >
             <img src={productData.image} alt="Product" className="object-cover w-full h-full" />
             <input id="image-upload" type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageChange} />
           </button>
@@ -188,11 +197,44 @@ const FrameComponent7 = ({ className = "", productId }) => {
       <div className="w-[515px] flex flex-col items-start justify-start gap-[24px] min-w-[515px] max-w-full text-xl text-gray-100 lg:flex-1 mq750:min-w-full">
         {editing ? (
           <>
-            <input type="text" name="name" value={newProductData.name} onChange={handleChange} className="m-0 self-stretch relative text-21xl leading-[110%] font-semibold font-inherit text-black mq1050:text-13xl mq1050:leading-[35px] mq450:text-5xl mq450:leading-[26px]" placeholder="商品名称" />
-            <textarea name="description" value={newProductData.description} onChange={handleChange} className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit mq450:text-lgi mq450:leading-[29px]" placeholder="商品描述" />
-            <input type="text" name="price" value={newProductData.price} onChange={handleChange} className="self-stretch relative leading-[150%] font-medium text-black mq450:text-base mq450:leading-[24px]" placeholder="预估报价" />
-            <input type="text" name="quantity" value={newProductData.quantity} onChange={handleChange} className="self-stretch relative leading-[150%] font-medium text-black mq450:text-base mq450:leading-[24px]" placeholder="商品数量" />
-            <div className="self-stretch relative leading-[150%] font-medium">支持的支付方式：{renderPaymentButtons()}</div>
+            <input
+              type="text"
+              name="name"
+              value={newProductData.name}
+              onChange={handleChange}
+              className="m-0 self-stretch relative text-21xl leading-[110%] font-semibold font-inherit text-black mq1050:text-13xl mq1050:leading-[35px] mq450:text-5xl mq450:leading-[26px]"
+              placeholder="商品名称"
+            />
+            <textarea
+              name="description"
+              value={newProductData.description}
+              onChange={handleChange}
+              className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit mq450:text-lgi mq450:leading-[29px]"
+              placeholder="商品描述"
+            />
+            <input
+              type="text"
+              name="price"
+              value={newProductData.price}
+              onChange={handleChange}
+              className="self-stretch relative leading-[150%] font-medium text-black mq450:text-base mq450:leading-[24px]"
+              placeholder="预估报价"
+            />
+            <input
+              type="text"
+              name="quantity"
+              value={newProductData.quantity}
+              onChange={handleChange}
+              className="self-stretch relative leading-[150%] font-medium text-black mq450:text-base mq450:leading-[24px]"
+              placeholder="商品数量"
+            />
+            <div className="self-stretch h-[300px] relative leading-[150%] font-medium flex flex-col items-start mq450:text-base mq450:leading-[24px]">
+              <span className="[line-break:anywhere]">
+                <p className="m-0">&nbsp;</p>
+                <p className="m-0">支持的支付方式：</p>
+                <div className="flex flex-row mt-2">{renderPaymentButtons()}</div>
+              </span>
+            </div>
           </>
         ) : (
           <>
@@ -212,14 +254,42 @@ const FrameComponent7 = ({ className = "", productId }) => {
         {userId === productData.user_id ? (
           editing ? (
             <div className="self-stretch flex flex-row justify-between gap-4">
-              <Button className="h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border" variant="contained" sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82, width: "45%" }} onClick={handleCancelClick}>取消</Button>
-              <Button className="h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border" variant="contained" sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82, width: "45%" }} onClick={handleSaveClick}>完成</Button>
+              <Button
+                className="h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border"
+                variant="contained"
+                sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82, width: "45%" }}
+                onClick={handleCancelClick}
+              >
+                取消
+              </Button>
+              <Button
+                className="h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border"
+                variant="contained"
+                sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82, width: "45%" }}
+                onClick={handleSaveClick}
+              >
+                完成
+              </Button>
             </div>
           ) : (
-            <Button className="self-stretch h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border" variant="contained" sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82 }} onClick={handleEditClick}>编辑</Button>
+            <Button
+              className="self-stretch h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border"
+              variant="contained"
+              sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82 }}
+              onClick={handleEditClick}
+            >
+              编辑
+            </Button>
           )
         ) : (
-          <Button className="self-stretch h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border" variant="contained" sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82 }} onClick={onButtonClick}>聊一聊</Button>
+          <Button
+            className="self-stretch h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border"
+            variant="contained"
+            sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82 }}
+            onClick={onButtonClick}
+          >
+            聊一聊
+          </Button>
         )}
         <div className="self-stretch relative text-base leading-[150%] font-medium">Text box for additional details or fine print</div>
       </div>
