@@ -108,7 +108,7 @@ const FrameComponent7 = ({ className = "", productId }) => {
         },
       });
       setEditing(false);
-      window.location.reload();
+      setProductData({ ...productData, ...newProductData, payment_methods: paymentMethods.join(",") });
     } catch (error) {
       console.error("Error updating product:", error);
     }
@@ -121,30 +121,55 @@ const FrameComponent7 = ({ className = "", productId }) => {
   }, [navigate, userId, productData.user_id]);
 
   const renderPaymentButtons = () => {
-    return paymentMethodsOrder.map((method) => (
-      <Button
-        key={method}
-        variant={paymentMethods.includes(method) ? "outlined" : "contained"}
-        sx={{
-          textTransform: "none",
-          color: "#000",
-          fontSize: "20px",
-          background: "#fff",
-          borderRadius: "8px",
-          margin: "0 10px",
-          boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)",
-          "&:hover": { background: "#f0f0f0" },
-          height: 50,
-          minWidth: 150,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-        onClick={() => handlePaymentMethodChange(method)}
-      >
-        {method}
-      </Button>
-    ));
+    return editing
+      ? paymentMethodsOrder.map((method) => (
+          <Button
+            key={method}
+            variant="contained"
+            sx={{
+              textTransform: "none",
+              color: "#000",
+              fontSize: "20px",
+              background: "#fff",
+              border: paymentMethods.includes(method) ? "2px solid red" : "none",
+              borderRadius: "8px",
+              margin: "0 10px",
+              boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)",
+              "&:hover": { background: "#f0f0f0" },
+              height: 50,
+              minWidth: 150,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onClick={() => handlePaymentMethodChange(method)}
+          >
+            {method}
+          </Button>
+        ))
+      : paymentMethods.map((method) => (
+          <Button
+            key={method}
+            variant="contained"
+            sx={{
+              textTransform: "none",
+              color: "#000",
+              fontSize: "20px",
+              background: "#fff",
+              borderRadius: "8px",
+              margin: "0 10px",
+              boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)",
+              height: 50,
+              minWidth: 150,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "none",
+            }}
+          >
+            {method}
+          </Button>
+        ));
   };
 
   return (
@@ -187,76 +212,14 @@ const FrameComponent7 = ({ className = "", productId }) => {
         {userId === productData.user_id ? (
           editing ? (
             <div className="self-stretch flex flex-row justify-between gap-4">
-              <Button
-                className="h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border"
-                variant="contained"
-                sx={{
-                  textTransform: "none",
-                  color: "#fff",
-                  fontSize: "36",
-                  background: "#ff0000",
-                  borderRadius: "8px",
-                  "&:hover": { background: "#ff0000" },
-                  height: 82,
-                  width: "45%",
-                }}
-                onClick={handleCancelClick}
-              >
-                取消
-              </Button>
-              <Button
-                className="h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border"
-                variant="contained"
-                sx={{
-                  textTransform: "none",
-                  color: "#fff",
-                  fontSize: "36",
-                  background: "#ff0000",
-                  borderRadius: "8px",
-                  "&:hover": { background: "#ff0000" },
-                  height: 82,
-                  width: "45%",
-                }}
-                onClick={handleSaveClick}
-              >
-                完成
-              </Button>
+              <Button className="h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border" variant="contained" sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82, width: "45%" }} onClick={handleCancelClick}>取消</Button>
+              <Button className="h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border" variant="contained" sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82, width: "45%" }} onClick={handleSaveClick}>完成</Button>
             </div>
           ) : (
-            <Button
-              className="self-stretch h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border"
-              variant="contained"
-              sx={{
-                textTransform: "none",
-                color: "#fff",
-                fontSize: "36",
-                background: "#ff0000",
-                borderRadius: "8px",
-                "&:hover": { background: "#ff0000" },
-                height: 82,
-              }}
-              onClick={handleEditClick}
-            >
-              编辑
-            </Button>
+            <Button className="self-stretch h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border" variant="contained" sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82 }} onClick={handleEditClick}>编辑</Button>
           )
         ) : (
-          <Button
-            className="self-stretch h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border"
-            variant="contained"
-            sx={{
-              textTransform: "none",
-              color: "#fff",
-              fontSize: "36",
-              background: "#ff0000",
-              borderRadius: "8px",
-              "&:hover": { background: "#ff0000" },
-              height: 82,
-            }}
-            onClick={onButtonClick}
-          >
-            聊一聊
-          </Button>
+          <Button className="self-stretch h-[82px] shadow-[0px_1px_2px_rgba(0,_0,_0,_0.05)] cursor-pointer mq450:pl-5 mq450:pr-5 mq450:box-border" variant="contained" sx={{ textTransform: "none", color: "#fff", fontSize: "36", background: "#ff0000", borderRadius: "8px", "&:hover": { background: "#ff0000" }, height: 82 }} onClick={onButtonClick}>聊一聊</Button>
         )}
         <div className="self-stretch relative text-base leading-[150%] font-medium">Text box for additional details or fine print</div>
       </div>
