@@ -1,46 +1,81 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TextField, Button } from "@mui/material";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
+import Cookies from "js-cookie";
 import FrameComponent4 from "../components/FrameComponent4";
 
-const Frame8 = ({ targetUserId }) => {
+const Frame8 = () => {
   const navigate = useNavigate();
   const { id: currentUserId } = useParams();
+  const location = useLocation();
+  const targetUserId = location.state?.targetUserId;
+
   const [chatMessages, setChatMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [userInfo, setUserInfo] = useState(null);
-  const [showUserInfo, setShowUserInfo] = useState(false);
-  const [showChatRecords, setShowChatRecords] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [selectedContact, setSelectedContact] = useState(null);
 
   useEffect(() => {
-    // Fetch chat messages
-    axios.get(`http://106.52.158.123:5000/api/chat/${targetUserId}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
+    const fetchContacts = async () => {
+      try {
+        const token = Cookies.get('authToken');
+        const response = await axios.get('http://106.52.158.123:5000/api/contacts', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setContacts(response.data);
+      } catch (error) {
+        console.error('Error fetching contacts:', error);
       }
-    })
-    .then(response => setChatMessages(response.data))
-    .catch(error => console.error('Error fetching chat messages:', error));
+    };
 
-    // Fetch user info
-    axios.get(`http://106.52.158.123:5000/api/basic_profile/${targetUserId}`)
-      .then(response => setUserInfo(response.data))
-      .catch(error => console.error('Error fetching user info:', error));
+    const fetchUserInfo = async () => {
+      try {
+        const response = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${targetUserId}`);
+        setUserInfo(response.data);
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    };
+
+    const fetchChatMessages = async () => {
+      try {
+        const token = Cookies.get('authToken');
+        const response = await axios.get(`http://106.52.158.123:5000/api/chat/${targetUserId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setChatMessages(response.data);
+      } catch (error) {
+        console.error('Error fetching chat messages:', error);
+      }
+    };
+
+    fetchContacts();
+    if (targetUserId) {
+      fetchUserInfo();
+      fetchChatMessages();
+    }
   }, [targetUserId]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (message.trim()) {
-      axios.post(`http://106.52.158.123:5000/api/chat/${targetUserId}`, { message }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-      .then(response => {
-        setChatMessages([...chatMessages, { sender_id: 'self', message }]);
+      try {
+        const token = Cookies.get('authToken');
+        await axios.post(`http://106.52.158.123:5000/api/chat/${targetUserId}`, { message }, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setChatMessages([...chatMessages, { sender_id: currentUserId, message }]);
         setMessage("");
-      })
-      .catch(error => console.error('Error sending message:', error));
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
     }
   };
 
@@ -50,31 +85,31 @@ const Frame8 = ({ targetUserId }) => {
     }
   };
 
-  const handleBackClick = useCallback(() => {
-    navigate(-1);
-  }, [navigate]);
-
-  const handleSellClick = useCallback(() => {
-    navigate(`/3/${targetUserId}`);
-  }, [navigate, targetUserId]);
-
-  const toggleUserInfo = () => {
-    setShowUserInfo(!showUserInfo);
+  const handleContactClick = (contact) => {
+    setSelectedContact(contact);
+    navigate(`/chat/${currentUserId}`, { state: { targetUserId: contact.contact_id } });
   };
 
-  const toggleChatRecords = () => {
-    setShowChatRecords(!showChatRecords);
+  const handleContactDelete = async (contactId) => {
+    try {
+      const token = Cookies.get('authToken');
+      await axios.delete(`http://106.52.158.123:5000/api/contacts/${contactId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setContacts(contacts.filter(contact => contact.contact_id !== contactId));
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+    }
   };
 
   return (
     <div className="relative flex flex-col h-screen w-full bg-gray-100">
       <FrameComponent4 />
       <div className="flex-1 flex p-5 box-border border-t border-gray-300">
-        <div className={`transition-transform duration-300 ${showChatRecords ? 'w-1/4 border-r border-gray-300' : 'w-0 overflow-hidden'}`}>
+        <div className="w-1/4 border-r border-gray-300">
           <div className="flex items-center justify-between p-4 border-b border-gray-300">
-            <div className="cursor-pointer text-xl bg-gray-200 rounded-full p-2" onClick={handleBackClick}>
-              {'<'}
-            </div>
             <div className="text-lg font-bold">沟通过的人</div>
           </div>
           <div className="p-4 border-b border-gray-300">
@@ -98,24 +133,22 @@ const Frame8 = ({ targetUserId }) => {
             />
           </div>
           <div className="overflow-y-auto p-4">
-            {chatMessages.map((chat, index) => (
-              <div key={index} className="flex items-center p-2 border-b border-gray-200">
-                <img className="w-10 h-10 rounded-full mr-4" alt="Avatar" src={chat.avatar} />
+            {contacts.map((contact) => (
+              <div key={contact.contact_id} className="flex items-center p-2 border-b border-gray-200">
+                <img className="w-10 h-10 rounded-full mr-4" alt="Avatar" src={contact.avatar_file} />
                 <div className="flex flex-col">
-                  <div className="font-bold">{chat.name}</div>
-                  <div className="text-sm text-gray-500">{chat.message}</div>
+                  <div className="font-bold">{contact.username}</div>
+                  <div className="text-sm text-gray-500">{contact.last_message}</div>
                 </div>
+                <button className="ml-auto text-red-500" onClick={() => handleContactDelete(contact.contact_id)}>X</button>
               </div>
             ))}
           </div>
         </div>
-        <div className={`flex-1 flex flex-col bg-white transition-transform duration-300 ${showChatRecords ? 'ml-1/4' : ''}`}>
+        <div className={`flex-1 flex flex-col bg-white ${selectedContact ? 'ml-1/4' : ''}`}>
           <div className="flex items-center justify-between p-4 border-b border-gray-300">
-            <div className="cursor-pointer text-xl" onClick={toggleChatRecords}>
-              {showChatRecords ? '<' : '>'}
-            </div>
             <div className="flex items-center">
-              <img className="w-10 h-10 rounded-full cursor-pointer shadow-md" alt="Avatar" src={userInfo?.avatar_file} onClick={toggleUserInfo} />
+              <img className="w-10 h-10 rounded-full cursor-pointer shadow-md" alt="Avatar" src={userInfo?.avatar_file} />
               <div className="ml-4">
                 <div className="font-bold">{userInfo?.username}</div>
                 <div className="text-sm text-gray-500">Active 20m ago</div>
@@ -158,66 +191,9 @@ const Frame8 = ({ targetUserId }) => {
             >
               发送
             </Button>
-            <div className="icon-button ml-2 mic-icon"></div>
-            <div className="icon-button ml-2 emoji-icon"></div>
-            <div className="icon-button ml-2 image-icon"></div>
-          </div>
-        </div>
-        <div className={`fixed top-0 right-0 h-full transition-transform duration-300 transform ${showUserInfo ? 'translate-x-0' : 'translate-x-full'} bg-white border-l border-gray-300 shadow-lg p-4 w-1/3`}>
-          <div className="flex flex-col items-center">
-            <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
-            <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
-            <div className="text-sm text-gray-500 mb-4">Active 20m ago</div>
-            <Button
-              className="w-full bg-red-500 text-white rounded-full"
-              disableElevation
-              variant="contained"
-              onClick={handleSellClick}
-              sx={{ textTransform: 'none', backgroundColor: '#ff0000', '&:hover': { backgroundColor: '#ff0000' } }}
-            >
-              他卖过的
-            </Button>
           </div>
         </div>
       </div>
-      <style jsx>{`
-        .icon-button {
-          cursor: pointer;
-          width: 24px;
-          height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid #000;
-          border-radius: 50%;
-        }
-
-        .icon-button.mic-icon::before {
-          content: '🎤';
-        }
-
-        .icon-button.emoji-icon::before {
-          content: '😀';
-        }
-
-        .icon-button.image-icon::before {
-          content: '📷';
-        }
-
-        .fixed-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          z-index: 10;
-        }
-
-        .shadow-lg {
-          box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
-        }
-      `}</style>
-      {showUserInfo && <div className="fixed-overlay" onClick={toggleUserInfo}></div>}
     </div>
   );
 };
