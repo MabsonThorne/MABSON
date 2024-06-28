@@ -180,8 +180,8 @@ const ProfileContent = ({ className = "", id }) => {
         </div>
       )}
       <section className="profile-info">
-        <div className="flex flex-col items-start justify-start gap-6 min-w-[300px] max-w-full">
-          <div className="relative w-full h-[437px] rounded-71xl max-w-full overflow-hidden shrink-0" onClick={handleAvatarClick} style={{ cursor: 'pointer' }}>
+        <div className="flex flex-col items-start justify-start gap-6 w-full max-w-full">
+          <div className="relative w-full h-[437px] rounded-71xl overflow-hidden shrink-0" onClick={handleAvatarClick} style={{ cursor: 'pointer' }}>
             <label htmlFor="avatar-upload" style={{ cursor: editing ? 'pointer' : 'default' }}>
               <img
                 className="object-cover w-full h-full"
@@ -206,7 +206,7 @@ const ProfileContent = ({ className = "", id }) => {
               />
             )}
           </div>
-          <div className="self-stretch flex flex-col items-start justify-start gap-[24px]">
+          <div className="self-stretch flex flex-col items-start justify-start gap-[24px] w-full">
             {editing ? (
               <>
                 <input
@@ -214,9 +214,9 @@ const ProfileContent = ({ className = "", id }) => {
                   name="username"
                   value={newUserData.username}
                   onChange={handleChange}
-                  className="m-0 self-stretch h-[77px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block mq1050:text-32xl mq450:text-19xl"
+                  className="m-0 self-stretch h-[77px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block mq1050:text-32xl mq450:text-19xl w-full"
                 />
-                <label className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray-100 mq450:text-lgi mq450:leading-[29px]">
+                <label className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray-100 mq450:text-lgi mq450:leading-[29px] w-full">
                   简介:
                   <input
                     type="text"
@@ -226,7 +226,7 @@ const ProfileContent = ({ className = "", id }) => {
                     className="w-full"
                   />
                 </label>
-                <label className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray-100 mq450:text-lgi mq450:leading-[29px]">
+                <label className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray-100 mq450:text-lgi mq450:leading-[29px] w-full">
                   性别:
                   <div className="flex gap-2">
                     <label className="flex items-center gap-1">
@@ -251,7 +251,7 @@ const ProfileContent = ({ className = "", id }) => {
                     </label>
                   </div>
                 </label>
-                <label className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray-100 mq450:text-lgi mq450:leading-[29px]">
+                <label className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray-100 mq450:text-lgi mq450:leading-[29px] w-full">
                   邮箱:
                   <input
                     type="text"
@@ -268,10 +268,10 @@ const ProfileContent = ({ className = "", id }) => {
               </>
             ) : (
               <>
-                <h1 className="m-0 self-stretch h-[77px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block mq1050:text-32xl mq450:text-19xl">
+                <h1 className="m-0 self-stretch h-[77px] relative text-inherit tracking-[-0.02em] font-bold font-inherit inline-block mq1050:text-32xl mq450:text-19xl w-full">
                   {userData.username}
                 </h1>
-                <div className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray-100 mq450:text-lgi mq450:leading-[29px] flex flex-col gap-4">
+                <div className="m-0 self-stretch relative text-5xl leading-[150%] font-normal font-inherit text-gray-100 mq450:text-lgi mq450:leading-[29px] flex flex-col gap-4 w-full">
                   <p className="m-0">ID: {userData.id}</p>
                   <p className="m-0">简介: {userData.bio}</p>
                   <p className="m-0">性别: {genderSymbol}</p>
@@ -288,17 +288,17 @@ const ProfileContent = ({ className = "", id }) => {
         </div>
       </section>
       <section className="product-list">
-        <h1 className="m-0 self-stretch relative text-inherit tracking-[-0.02em] font-bold font-inherit text-32xl">
+        <h1 className="m-0 self-stretch relative text-inherit tracking-[-0.02em] font-bold font-inherit text-32xl w-full">
           发布过的
         </h1>
-        <div className="self-stretch flex flex-row flex-wrap items-start justify-center gap-6 min-h-[554px]">
+        <div className="self-stretch flex flex-row flex-wrap items-start justify-center gap-6 min-h-[554px] w-full">
           {currentItems.map((product, i) => (
             <div key={i} className="product-card">
               <ProductCard productId={product.id} />
             </div>
           ))}
         </div>
-        <div className="self-stretch flex flex-row items-center justify-center py-0 px-5 box-border max-w-full text-base gap-4">
+        <div className="self-stretch flex flex-row items-center justify-center py-0 px-5 box-border max-w-full text-base gap-4 w-full">
           <button
             className="bg-gray-200 text-gray-700 rounded-lg px-4 py-2"
             onClick={handlePreviousPage}
@@ -321,6 +321,7 @@ const ProfileContent = ({ className = "", id }) => {
           display: flex;
           flex-wrap: wrap;
           justify-content: space-between;
+          padding: 0 16px; /* 增加左右边距 */
         }
 
         .profile-info {
