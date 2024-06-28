@@ -137,7 +137,7 @@ const ProfileContent = ({ className = "", id }) => {
 
   const handleChatClick = () => {
     if (currentUserId) {
-      navigate(`/chat/${currentUserId}`, { state: { otherUserId: id } });
+      navigate(`/chat/${currentUserId}`, { state: { contact_id: id } });
     } else {
       window.location.href = 'http://106.52.158.123:3000/4';
     }
