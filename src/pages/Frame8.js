@@ -1,321 +1,225 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useCallback, useState, useEffect } from "react";
+import { TextField, Button } from "@mui/material";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import Cookies from "js-cookie";
-import PropTypes from "prop-types";
-import ProductCard from "./ProductCard";
-import UserCard from "./UserCard";
+import FrameComponent4 from "../components/FrameComponent4";
 
-const Frame8 = ({ className = "" }) => {
-  const { id: currentUserId } = useParams();
+const Frame8 = ({ targetUserId }) => {
   const navigate = useNavigate();
-  const [userProfiles, setUserProfiles] = useState([]);
-  const [currentChatUser, setCurrentChatUser] = useState(null);
-  const [currentUserData, setCurrentUserData] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { id: currentUserId } = useParams();
+  const [chatMessages, setChatMessages] = useState([]);
+  const [message, setMessage] = useState("");
+  const [userInfo, setUserInfo] = useState(null);
+  const [showUserInfo, setShowUserInfo] = useState(false);
+  const [showChatRecords, setShowChatRecords] = useState(false);
 
   useEffect(() => {
-    const fetchUserProfiles = async () => {
-      try {
-        const response = await axios.get("http://106.52.158.123:5000/api/conversations", { withCredentials: true });
-        setUserProfiles(response.data);
-        setError(null);  // Clear previous errors
-      } catch (error) {
-        setError("Error fetching user profiles");
-        console.error("Error fetching user profiles:", error);
+    // Fetch chat messages
+    axios.get(`http://106.52.158.123:5000/api/chat/${targetUserId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
-    };
+    })
+    .then(response => setChatMessages(response.data))
+    .catch(error => console.error('Error fetching chat messages:', error));
 
-    const fetchCurrentUserData = async () => {
-      try {
-        const response = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${currentUserId}`, { withCredentials: true });
-        setCurrentUserData(response.data);
-        setError(null);  // Clear previous errors
-      } catch (error) {
-        setError("Error fetching current user data");
-        console.error("Error fetching current user data:", error);
-      }
-    };
+    // Fetch user info
+    axios.get(`http://106.52.158.123:5000/api/basic_profile/${targetUserId}`)
+      .then(response => setUserInfo(response.data))
+      .catch(error => console.error('Error fetching user info:', error));
+  }, [targetUserId]);
 
-    fetchUserProfiles();
-    fetchCurrentUserData();
-    setLoading(false);
-  }, [currentUserId]);
-
-  const handleChatUserClick = async (userId) => {
-    try {
-      const response = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${userId}`, { withCredentials: true });
-      setCurrentChatUser(response.data);
-      setError(null);  // Clear previous errors
-    } catch (error) {
-      setError("Error fetching chat user data");
-      console.error("Error fetching chat user data:", error);
+  const handleSendMessage = () => {
+    if (message.trim()) {
+      axios.post(`http://106.52.158.123:5000/api/chat/${targetUserId}`, { message }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      .then(response => {
+        setChatMessages([...chatMessages, { sender_id: 'self', message }]);
+        setMessage("");
+      })
+      .catch(error => console.error('Error sending message:', error));
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
-
-    try {
-      const response = await axios.post(
-        `http://106.52.158.123:5000/api/messages`,
-        {
-          senderId: currentUserId,
-          receiverId: currentChatUser.id,
-          content: newMessage,
-        },
-        { withCredentials: true }
-      );
-
-      setMessages([...messages, response.data]);
-      setNewMessage("");
-      setError(null);  // Clear previous errors
-    } catch (error) {
-      setError("Error sending message");
-      console.error("Error sending message:", error);
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
     }
+  };
+
+  const handleBackClick = useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
+
+  const handleSellClick = useCallback(() => {
+    navigate(`/3/${targetUserId}`);
+  }, [navigate, targetUserId]);
+
+  const toggleUserInfo = () => {
+    setShowUserInfo(!showUserInfo);
+  };
+
+  const toggleChatRecords = () => {
+    setShowChatRecords(!showChatRecords);
   };
 
   return (
-    <div className={`frame8-container ${className}`}>
-      <header className="frame-header">
-        <h1>Chat</h1>
-        <ProductCard />
-        <UserCard />
-      </header>
-      <div className="main-content">
-        <div className="sidebar">
-          <input type="text" placeholder="Search chats" className="search-input" />
-          {userProfiles.map((user) => (
-            <button
-              key={user.id}
-              className={`user-card ${currentChatUser && currentChatUser.id === user.id ? "active" : ""}`}
-              onClick={() => handleChatUserClick(user.id)}
-            >
-              <img src={user.avatar_file} alt={user.username} className="user-avatar" />
-              <div className="user-info">
-                <div className="user-name">{user.username}</div>
-                <div className="user-last-message">{user.lastMessage}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-        <div className="chat-area">
-          {currentChatUser ? (
-            <div className="chat-header">
-              <img src={currentChatUser.avatar_file} alt={currentChatUser.username} className="chat-user-avatar" />
-              <div className="chat-user-info">
-                <div className="chat-user-name">{currentChatUser.username}</div>
-                <div className="chat-user-status">{currentChatUser.lastActive}</div>
-              </div>
+    <div className="relative flex flex-col h-screen w-full bg-gray-100">
+      <FrameComponent4 />
+      <div className="flex-1 flex p-5 box-border border-t border-gray-300">
+        <div className={`transition-transform duration-300 ${showChatRecords ? 'w-1/4 border-r border-gray-300' : 'w-0 overflow-hidden'}`}>
+          <div className="flex items-center justify-between p-4 border-b border-gray-300">
+            <div className="cursor-pointer text-xl bg-gray-200 rounded-full p-2" onClick={handleBackClick}>
+              {'<'}
             </div>
-          ) : (
-            <div className="chat-placeholder">Select a user to start chatting</div>
-          )}
-          <div className="chat-messages">
-            {messages.map((message) => (
-              <div key={message.id} className={`chat-message ${message.senderId === currentUserId ? "outgoing" : "incoming"}`}>
-                <div className="message-content">{message.content}</div>
+            <div className="text-lg font-bold">沟通过的人</div>
+          </div>
+          <div className="p-4 border-b border-gray-300">
+            <TextField
+              className="w-full"
+              placeholder="Search chats"
+              variant="outlined"
+              sx={{
+                "& fieldset": { borderColor: "#e0e0e0" },
+                "& .MuiInputBase-root": {
+                  height: "40px",
+                  backgroundColor: "#fff",
+                  paddingLeft: "12px",
+                  borderRadius: "8px",
+                },
+                "& .MuiInputBase-input": {
+                  paddingLeft: "12px",
+                  color: "#828282",
+                },
+              }}
+            />
+          </div>
+          <div className="overflow-y-auto p-4">
+            {chatMessages.map((chat, index) => (
+              <div key={index} className="flex items-center p-2 border-b border-gray-200">
+                <img className="w-10 h-10 rounded-full mr-4" alt="Avatar" src={chat.avatar} />
+                <div className="flex flex-col">
+                  <div className="font-bold">{chat.name}</div>
+                  <div className="text-sm text-gray-500">{chat.message}</div>
+                </div>
               </div>
             ))}
           </div>
-          {currentChatUser && (
-            <div className="chat-input-area">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type your message"
-                className="chat-input"
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-              />
-              <button onClick={handleSendMessage} className="send-button">Send</button>
-            </div>
-          )}
         </div>
-        <div className={`user-info-sidebar ${currentChatUser ? "visible" : ""}`}>
-          {currentChatUser && (
-            <>
-              <img src={currentChatUser.avatar_file} alt={currentChatUser.username} className="user-avatar" />
-              <div className="user-info">
-                <div className="user-name">{currentChatUser.username}</div>
-                <div className="user-gender">{currentChatUser.gender}</div>
-                <div className="user-last-active">{currentChatUser.lastActive}</div>
-                <button className="shadow-button" onClick={() => navigate(`/3/${currentChatUser.id}`)}>
-                  他{currentChatUser.gender === "♂" ? "卖过的" : "卖过的"}
-                </button>
+        <div className={`flex-1 flex flex-col bg-white transition-transform duration-300 ${showChatRecords ? 'ml-1/4' : ''}`}>
+          <div className="flex items-center justify-between p-4 border-b border-gray-300">
+            <div className="cursor-pointer text-xl" onClick={toggleChatRecords}>
+              {showChatRecords ? '<' : '>'}
+            </div>
+            <div className="flex items-center">
+              <img className="w-10 h-10 rounded-full cursor-pointer shadow-md" alt="Avatar" src={userInfo?.avatar_file} onClick={toggleUserInfo} />
+              <div className="ml-4">
+                <div className="font-bold">{userInfo?.username}</div>
+                <div className="text-sm text-gray-500">Active 20m ago</div>
               </div>
-            </>
-          )}
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            {chatMessages.map((message, index) => (
+              <div key={index} className={`flex ${message.sender_id === currentUserId ? 'justify-end' : 'justify-start'} mb-4`}>
+                <div className={`p-4 rounded-lg ${message.sender_id === currentUserId ? 'bg-red-200 text-white' : 'bg-gray-200 text-black'}`}>
+                  {message.message}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center p-4 border-t border-gray-300">
+            <TextField
+              className="flex-1"
+              placeholder="Enter your message"
+              variant="outlined"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              sx={{
+                "& fieldset": { borderColor: "#e0e0e0" },
+                "& .MuiInputBase-root": {
+                  backgroundColor: "#fff",
+                  borderRadius: "8px",
+                },
+                "& .MuiInputBase-input": {
+                  paddingLeft: "12px",
+                  color: "#828282",
+                },
+              }}
+            />
+            <Button
+              className="ml-2 bg-red-500 text-white rounded-full p-2"
+              onClick={handleSendMessage}
+              sx={{ textTransform: 'none', backgroundColor: '#ff0000', '&:hover': { backgroundColor: '#ff0000' } }}
+            >
+              发送
+            </Button>
+            <div className="icon-button ml-2 mic-icon"></div>
+            <div className="icon-button ml-2 emoji-icon"></div>
+            <div className="icon-button ml-2 image-icon"></div>
+          </div>
+        </div>
+        <div className={`fixed top-0 right-0 h-full transition-transform duration-300 transform ${showUserInfo ? 'translate-x-0' : 'translate-x-full'} bg-white border-l border-gray-300 shadow-lg p-4 w-1/3`}>
+          <div className="flex flex-col items-center">
+            <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
+            <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
+            <div className="text-sm text-gray-500 mb-4">Active 20m ago</div>
+            <Button
+              className="w-full bg-red-500 text-white rounded-full"
+              disableElevation
+              variant="contained"
+              onClick={handleSellClick}
+              sx={{ textTransform: 'none', backgroundColor: '#ff0000', '&:hover': { backgroundColor: '#ff0000' } }}
+            >
+              他卖过的
+            </Button>
+          </div>
         </div>
       </div>
       <style jsx>{`
-        .frame8-container {
+        .icon-button {
+          cursor: pointer;
+          width: 24px;
+          height: 24px;
           display: flex;
-          flex-direction: column;
-          height: 100vh;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid #000;
+          border-radius: 50%;
         }
-        .frame-header {
-          background: #f5f5f5;
-          padding: 10px;
-          border-bottom: 1px solid #e0e0e0;
+
+        .icon-button.mic-icon::before {
+          content: '🎤';
         }
-        .main-content {
-          display: flex;
-          flex: 1;
-          overflow: hidden;
+
+        .icon-button.emoji-icon::before {
+          content: '😀';
         }
-        .sidebar {
-          width: 300px;
-          border-right: 1px solid #e0e0e0;
-          padding: 10px;
-          overflow-y: auto;
+
+        .icon-button.image-icon::before {
+          content: '📷';
         }
-        .search-input {
+
+        .fixed-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
           width: 100%;
-          padding: 10px;
-          margin-bottom: 10px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
+          height: 100%;
+          z-index: 10;
         }
-        .user-card {
-          display: flex;
-          align-items: center;
-          padding: 10px;
-          margin-bottom: 10px;
-          border-radius: 4px;
-          background: #fff;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-          transition: background 0.3s;
-        }
-        .user-card.active {
-          background: #f0f0f0;
-        }
-        .user-avatar {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          margin-right: 10px;
-        }
-        .user-info {
-          flex: 1;
-        }
-        .user-name {
-          font-weight: bold;
-          margin-bottom: 5px;
-        }
-        .user-last-message {
-          color: #666;
-        }
-        .chat-area {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-        }
-        .chat-header {
-          display: flex;
-          align-items: center;
-          padding: 10px;
-          border-bottom: 1px solid #e0e0e0;
-          background: #fff;
-        }
-        .chat-user-avatar {
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          margin-right: 10px;
-        }
-        .chat-user-info {
-          flex: 1;
-        }
-        .chat-user-name {
-          font-size: 20px;
-          font-weight: bold;
-        }
-        .chat-user-status {
-          color: #666;
-        }
-        .chat-messages {
-          flex: 1;
-          padding: 10px;
-          overflow-y: auto;
-        }
-        .chat-message {
-          margin-bottom: 10px;
-          max-width: 60%;
-        }
-        .chat-message.outgoing {
-          align-self: flex-end;
-          background: #dcf8c6;
-          padding: 10px;
-          border-radius: 10px;
-          margin-right: 10px;
-        }
-        .chat-message.incoming {
-          align-self: flex-start;
-          background: #fff;
-          padding: 10px;
-          border-radius: 10px;
-          margin-left: 10px;
-        }
-        .chat-input-area {
-          display: flex;
-          padding: 10px;
-          border-top: 1px solid #e0e0e0;
-          background: #fff;
-        }
-        .chat-input {
-          flex: 1;
-          padding: 10px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          margin-right: 10px;
-        }
-        .send-button {
-          padding: 10px 20px;
-          border: none;
-          background: #007bff;
-          color: #fff;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        .user-info-sidebar {
-          width: 300px;
-          border-left: 1px solid #e0e0e0;
-          padding: 10px;
-          background: #fff;
-          transition: transform 0.3s;
-          transform: translateX(100%);
-        }
-        .user-info-sidebar.visible {
-          transform: translateX(0);
-        }
-        .user-info-sidebar .user-avatar {
-          width: 100px;
-          height: 100px;
-          border-radius: 50%;
-          margin-bottom: 10px;
-        }
-        .user-info-sidebar .user-info {
-          text-align: center;
-        }
-        .shadow-button {
-          background: red;
-          color: #fff;
-          padding: 10px;
-          border-radius: 5px;
-          cursor: pointer;
+
+        .shadow-lg {
+          box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
         }
       `}</style>
+      {showUserInfo && <div className="fixed-overlay" onClick={toggleUserInfo}></div>}
     </div>
   );
-};
-
-Frame8.propTypes = {
-  className: PropTypes.string,
 };
 
 export default Frame8;
