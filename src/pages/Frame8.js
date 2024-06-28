@@ -7,16 +7,15 @@ import FrameComponent4 from "../components/FrameComponent4";
 
 const Frame8 = () => {
   const navigate = useNavigate();
-  const { id: userId } = useParams(); // 获取 URL 中的 userId
+  const { id: currentUserId } = useParams(); // 从 URL 获取当前用户 ID
   const location = useLocation();
-  const { contact_id } = location.state; // 从传递的 state 中获取 contact_id
+  const { contact_id } = location.state || {}; // 从传递的 state 中获取 contact_id
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [userInfo, setUserInfo] = useState(null);
   const [showUserInfo, setShowUserInfo] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -40,57 +39,39 @@ const Frame8 = () => {
     };
 
     const fetchUserInfo = async () => {
-      const token = Cookies.get("authToken");
-      if (!token) {
-        console.error("No auth token found");
-        return;
-      }
-      console.log(`Fetching user info for user ID: ${contact_id} with token: ${token}`);
+      console.log(`Fetching user info for user ID: ${contact_id}`);
       try {
         const response = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${contact_id}`);
         console.log("Fetched user info:", response.data);
         setUserInfo(response.data);
 
         // Add contact to the database if not exists
-        await axios.post(`http://106.52.158.123:5000/api/contacts`, {
-          contact_id: contact_id,
-          last_message: "",
-          last_message_time: new Date().toISOString()
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`
+        const token = Cookies.get("authToken");
+        if (token) {
+          try {
+            await axios.post(`http://106.52.158.123:5000/api/contacts`, {
+              contact_id: contact_id,
+              last_message: "",
+              last_message_time: new Date().toISOString()
+            }, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            });
+            fetchContacts(); // Refresh contacts after adding new contact
+          } catch (error) {
+            console.error("Error adding contact:", error);
           }
-        });
-
-        fetchContacts(); // Refresh contacts after adding new contact
+        }
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
     };
 
-    const fetchCurrentUser = async () => {
-      const token = Cookies.get("authToken");
-      if (!token) {
-        console.error("No auth token found");
-        return;
-      }
-      console.log(`Fetching current user with token: ${token}`);
-      try {
-        const response = await axios.get("http://106.52.158.123:5000/api/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        console.log("Fetched current user info:", response.data);
-        setCurrentUserId(response.data.id);
-      } catch (error) {
-        console.error("Error fetching current user info:", error);
-      }
-    };
-
     fetchContacts();
-    fetchUserInfo(); // 调用 fetchUserInfo 确保获取到目标用户的信息
-    fetchCurrentUser();
+    if (contact_id) {
+      fetchUserInfo(); // 仅当 contact_id 存在时获取目标用户信息
+    }
   }, [contact_id]); // 确保目标用户 ID 变化时重新获取信息
 
   const handleSendMessage = async () => {
@@ -286,11 +267,11 @@ const Frame8 = () => {
             <div className="icon-button ml-2 image-icon"></div>
           </div>
         </div>
-        {showUserInfo && (
+        {showUserInfo && userInfo && (
           <div className={`fixed top-0 right-0 h-full transition-transform duration-300 transform ${showUserInfo ? "translate-x-0" : "translate-x-full"} bg-white border-l border-gray-300 shadow-lg p-4 w-1/3`}>
             <div className="flex flex-col items-center">
-              <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
-              <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
+              <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo.avatar_file} />
+              <div className="text-lg font-bold mb-2">{userInfo.username}</div>
               <div className="text-sm text-gray-500 mb-4">Active 20m ago</div>
               <Button
                 className="w-full bg-red-500 text-white rounded-full"
