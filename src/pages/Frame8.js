@@ -24,19 +24,23 @@ const Frame8 = () => {
     console.log("Received Contact ID:", contact_id);
 
     if (currentUserId && contact_id) {
+      checkAndCreateContact(currentUserId, contact_id); // 第一个功能立即执行一次
       const intervalId = setInterval(() => {
-        checkAndCreateContact(currentUserId, contact_id);
-      }, 5000); // 每5秒执行一次第一个功能
+        userIds.forEach(id => {
+          checkAndCreateContact(currentUserId, id); // 每5秒执行一次第一个功能，使用第二个功能的 userIds 作为 contact_id
+        });
+      }, 5000);
 
       return () => clearInterval(intervalId); // 清除定时器
     }
-  }, [currentUserId, contact_id]);
+  }, [currentUserId, contact_id, userIds]);
 
   useEffect(() => {
     if (currentUserId) {
+      getUserIds(currentUserId); // 第二个功能时刻执行
       const intervalId = setInterval(() => {
-        getUserIds(currentUserId);
-      }, 5000); // 每5秒执行一次第二个功能
+        getUserIds(currentUserId); // 每5秒执行一次第二个功能
+      }, 5000);
 
       return () => clearInterval(intervalId); // 清除定时器
     }
