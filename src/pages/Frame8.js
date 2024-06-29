@@ -17,8 +17,8 @@ const Frame8 = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [showUserInfo, setShowUserInfo] = useState(false);
   const messagesEndRef = useRef(null);
+  const [newUserCount, setNewUserCount] = useState(0);
 
-  // 第二个功能：时刻查找并返回数据传递给第一个功能
   const getUserIds = async () => {
     const token = Cookies.get("authToken");
     if (!token) {
@@ -43,7 +43,6 @@ const Frame8 = () => {
     }
   };
 
-  // 第一个功能：获取contacts
   const fetchContacts = async (additionalContactIds = []) => {
     const token = Cookies.get("authToken");
     if (!token) {
@@ -73,25 +72,62 @@ const Frame8 = () => {
     }
   };
 
-  // 获取传递过来的contact_id并立即生成名片
+  const handleSendMessage = async () => {
+    const token = Cookies.get("authToken");
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
+    if (message.trim() && selectedContact) {
+      try {
+        const newMessage = { sender_id: currentUserId, receiver_id: selectedContact.contact_id, message };
+        setChatMessages([...chatMessages, newMessage]); // 立即显示消息
+        setMessage("");
+        await axios.post(`http://106.52.158.123:5000/api/chat/${selectedContact.contact_id}`, newMessage, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        // 在发送消息后，检查并更新contacts
+        const response = await axios.post(
+          "http://106.52.158.123:5000/api/user_contacts",
+          { userId: currentUserId, contactId: selectedContact.contact_id },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.data) {
+          fetchContacts(response.data.map(contact => contact.contact_id));
+        }
+
+        fetchChatMessages(selectedContact.contact_id, token); // 确保消息发送成功后刷新消息列表
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    }
+  };
+
   useEffect(() => {
     if (contact_id) {
       fetchContacts([contact_id]);
     }
   }, [contact_id]);
 
-  // 定期执行第一个功能并将第二个功能返回的user_id作为contact_id传递给第一个功能
   useEffect(() => {
     const interval = setInterval(async () => {
       const userIds = await getUserIds();
       const additionalContactIds = userIds.filter(id => id !== currentUserId); // 过滤掉当前页面的id
-      fetchContacts(additionalContactIds);
+      if (additionalContactIds.length > 0) {
+        setNewUserCount(additionalContactIds.length);
+        fetchContacts(additionalContactIds);
+      } else {
+        setNewUserCount(0);
+      }
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // 选中联系人后获取聊天消息
   useEffect(() => {
     if (selectedContact) {
       const token = Cookies.get("authToken");
@@ -111,30 +147,6 @@ const Frame8 = () => {
       .catch(error => console.error("Error fetching chat messages:", error));
     }
   }, [selectedContact]);
-
-  // 发送消息
-  const handleSendMessage = async () => {
-    const token = Cookies.get("authToken");
-    if (!token) {
-      console.error("No auth token found");
-      return;
-    }
-    if (message.trim() && selectedContact) {
-      try {
-        const newMessage = { sender_id: currentUserId, receiver_id: selectedContact.contact_id, message };
-        setChatMessages([...chatMessages, newMessage]); // 立即显示消息
-        setMessage("");
-        await axios.post(`http://106.52.158.123:5000/api/chat/${selectedContact.contact_id}`, newMessage, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        fetchChatMessages(selectedContact.contact_id, token); // 确保消息发送成功后刷新消息列表
-      } catch (error) {
-        console.error("Error sending message:", error);
-      }
-    }
-  };
 
   const fetchChatMessages = async (contactId, token) => {
     try {
@@ -216,7 +228,7 @@ const Frame8 = () => {
 
   return (
     <div className="relative flex flex-col h-screen w-full bg-gray-100">
-      <FrameComponent4 />
+      <FrameComponent4 newUserCount={newUserCount} />
       <div className="flex-1 flex p-5 box-border border-t border-gray-300">
         <div className="transition-transform duration-1000 w-1/4 border-r border-gray-300">
           <div className="flex items-center justify-between p-4 border-b border-gray-300">
@@ -257,6 +269,9 @@ const Frame8 = () => {
                   <div className="font-bold">{contact.username}</div>
                   <div className="text-sm text-gray-500">{contact.last_message}</div>
                 </div>
+                {contact.newUser && (
+                  <div className="absolute right-0 w-3 h-3 bg-red-500 rounded-full mr-4" />
+                )}
                 <button
                   className="absolute right-0 p-2 text-red-500"
                   onClick={(e) => { e.stopPropagation(); handleDeleteContact(contact.contact_id); }}
