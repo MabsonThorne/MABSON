@@ -372,8 +372,8 @@ const Frame8 = () => {
           </div>
         )}
       </div>
-      <style jsx>{`
-        .icon-button {
+      <style jsx>{
+        `.icon-button {
           cursor: pointer;
           width: 24px;
           height: 24px;
@@ -407,8 +407,8 @@ const Frame8 = () => {
 
         .shadow-lg {
           box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
-        }
-      `}</style>
+        }`
+      }</style>
       {showUserInfo && <div className="fixed-overlay" onClick={handleHideUserInfo}></div>}
     </div>
   );
