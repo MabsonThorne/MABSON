@@ -20,16 +20,10 @@ const Frame8 = () => {
   const [newUserCount, setNewUserCount] = useState(0);
 
   const getUserIds = async () => {
-    const token = Cookies.get("authToken");
-    if (!token) {
-      console.error("No auth token found");
-      return [];
-    }
     try {
       const response = await axios.post(
         "http://106.52.158.123:5000/api/user_contacts",
-        { contactId: currentUserId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { userId: currentUserId } // 发送 userId 参数
       );
       if (response.data.length === 0) {
         console.log("No matching user IDs found.");
@@ -43,17 +37,8 @@ const Frame8 = () => {
   };
 
   const fetchContacts = async (additionalContactIds = []) => {
-    const token = Cookies.get("authToken");
-    if (!token) {
-      console.error("No auth token found");
-      return;
-    }
     try {
-      const response = await axios.get("http://106.52.158.123:5000/api/contacts", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await axios.get("http://106.52.158.123:5000/api/contacts");
 
       const allContactIds = [...response.data.map(contact => contact.contact_id), ...additionalContactIds];
       const uniqueContactIds = [...new Set(allContactIds)];
@@ -372,8 +357,8 @@ const Frame8 = () => {
           </div>
         )}
       </div>
-      <style jsx>{
-        `.icon-button {
+      <style jsx>{`
+        .icon-button {
           cursor: pointer;
           width: 24px;
           height: 24px;
@@ -407,8 +392,8 @@ const Frame8 = () => {
 
         .shadow-lg {
           box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
-        }`
-      }</style>
+        }
+      `}</style>
       {showUserInfo && <div className="fixed-overlay" onClick={handleHideUserInfo}></div>}
     </div>
   );
