@@ -16,19 +16,52 @@ const Frame8 = () => {
   const [message, setMessage] = useState("");
   const [userInfo, setUserInfo] = useState(null);
   const [showUserInfo, setShowUserInfo] = useState(false);
+  const [userIds, setUserIds] = useState([]); // 存储从第二个功能获取的user_id
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     console.log("Current User ID:", currentUserId);
     console.log("Received Contact ID:", contact_id);
+
     if (currentUserId && contact_id) {
       const intervalId = setInterval(() => {
         checkAndCreateContact(currentUserId, contact_id);
-      }, 5000); // 每5秒执行一次
+      }, 5000); // 每5秒执行一次第一个功能
 
       return () => clearInterval(intervalId); // 清除定时器
     }
   }, [currentUserId, contact_id]);
+
+  useEffect(() => {
+    if (currentUserId) {
+      const intervalId = setInterval(() => {
+        getUserIds(currentUserId);
+      }, 5000); // 每5秒执行一次第二个功能
+
+      return () => clearInterval(intervalId); // 清除定时器
+    }
+  }, [currentUserId]);
+
+  const getUserIds = async (contactId) => {
+    const token = Cookies.get("authToken");
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
+    try {
+      const response = await axios.post("http://106.52.158.123:5000/api/user_contacts", {
+        contactId,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log("Fetched user IDs for contact ID:", response.data);
+      setUserIds(response.data.map(user => user.user_id));
+    } catch (error) {
+      console.error("Error fetching user IDs:", error);
+    }
+  };
 
   const checkAndCreateContact = async (userId, contactId) => {
     const token = Cookies.get("authToken");
