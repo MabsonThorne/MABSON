@@ -9,7 +9,7 @@ const Frame8 = () => {
   const navigate = useNavigate();
   const { id: currentUserId } = useParams();
   const location = useLocation();
-  const { contact_id } = location.state || {};
+  const { contact_id: otherContactId } = location.state || {};
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
@@ -19,22 +19,17 @@ const Frame8 = () => {
   const messagesEndRef = useRef(null);
   const [newUserCount, setNewUserCount] = useState(0);
 
-  const fetchToken = () => {
-    const token = Cookies.get("authToken");
-    console.log("JWT Token:", token);
-    return token;
-  };
-
   const getUserIds = async () => {
-    const token = fetchToken();
+    const token = Cookies.get("authToken");
     if (!token) {
       console.error("No auth token found");
       return [];
     }
     try {
-      const response = await axios.get(`http://106.52.158.123:5000/api/user_contacts/${currentUserId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(
+        `http://106.52.158.123:5000/api/user_contacts/${currentUserId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       if (response.data.length === 0) {
         console.log("No matching user IDs found.");
         return [];
@@ -47,7 +42,7 @@ const Frame8 = () => {
   };
 
   const fetchContacts = async (additionalContactIds = []) => {
-    const token = fetchToken();
+    const token = Cookies.get("authToken");
     if (!token) {
       console.error("No auth token found");
       return;
@@ -74,7 +69,7 @@ const Frame8 = () => {
   };
 
   const handleSendMessage = async () => {
-    const token = fetchToken();
+    const token = Cookies.get("authToken");
     if (!token) {
       console.error("No auth token found");
       return;
@@ -84,22 +79,31 @@ const Frame8 = () => {
         const newMessage = { sender_id: currentUserId, receiver_id: selectedContact.contact_id, message };
         setChatMessages([...chatMessages, newMessage]);
         setMessage("");
-        await axios.post(`http://106.52.158.123:5000/api/chat/${selectedContact.contact_id}`, { message }, {
+        await axios.post(`http://106.52.158.123:5000/api/chat/${selectedContact.contact_id}`, newMessage, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
 
-        // 如果 selectedContact 是从其他组件获取的 contact_id，我们需要查询或创建
-        if (contact_id === selectedContact.contact_id) {
-          const response = await axios.post(
-            "http://106.52.158.123:5000/api/contacts",
-            { contact_id: selectedContact.contact_id, last_message: message, last_message_time: new Date() },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          if (response.status === 201) {
-            console.log("Contact created or updated.");
-          }
+        // 发送消息成功后，进行查询或创建操作
+        await axios.post(
+          "http://106.52.158.123:5000/api/contacts",
+          {
+            userId: currentUserId,
+            contact_id: selectedContact.contact_id,
+            last_message: message,
+            last_message_time: new Date().toISOString()
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const response = await axios.get(
+          `http://106.52.158.123:5000/api/user_contacts/${selectedContact.contact_id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.data) {
+          fetchContacts(response.data.map(contact => contact.contact_id));
         }
 
         fetchChatMessages(selectedContact.contact_id, token);
@@ -110,10 +114,10 @@ const Frame8 = () => {
   };
 
   useEffect(() => {
-    if (contact_id) {
-      fetchContacts([contact_id]);
+    if (otherContactId) {
+      fetchContacts([otherContactId]);
     }
-  }, [contact_id]);
+  }, [otherContactId]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -132,7 +136,7 @@ const Frame8 = () => {
 
   useEffect(() => {
     if (selectedContact) {
-      const token = fetchToken();
+      const token = Cookies.get("authToken");
       if (!token) {
         console.error("No auth token found");
         return;
@@ -182,7 +186,7 @@ const Frame8 = () => {
     setSelectedContact(contact);
     setShowUserInfo(false);
     setChatMessages([]);
-    const token = fetchToken();
+    const token = Cookies.get("authToken");
     if (!token) {
       console.error("No auth token found");
       return;
@@ -191,7 +195,7 @@ const Frame8 = () => {
   };
 
   const handleDeleteContact = async (contactId) => {
-    const token = fetchToken();
+    const token = Cookies.get("authToken");
     if (!token) {
       console.error("No auth token found");
       return;
@@ -378,7 +382,8 @@ const Frame8 = () => {
           </div>
         )}
       </div>
-      <style jsx>{`
+      <style jsx>{
+        `
         .icon-button {
           cursor: pointer;
           width: 24px;
@@ -414,7 +419,8 @@ const Frame8 = () => {
         .shadow-lg {
           box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
         }
-      `}</style>
+        `
+      }</style>
       {showUserInfo && <div className="fixed-overlay" onClick={handleHideUserInfo}></div>}
     </div>
   );
