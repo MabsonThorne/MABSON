@@ -16,113 +16,102 @@ const Frame8 = () => {
   const [message, setMessage] = useState("");
   const [userInfo, setUserInfo] = useState(null);
   const [showUserInfo, setShowUserInfo] = useState(false);
-  const [userIds, setUserIds] = useState([]); // 存储从第二个功能获取的user_id
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    console.log("Current User ID:", currentUserId);
-    console.log("Received Contact ID:", contact_id);
-
-    if (currentUserId && contact_id) {
-      checkAndCreateContact(currentUserId, contact_id); // 第一个功能立即执行一次
-      const intervalId = setInterval(() => {
-        userIds.forEach(id => {
-          checkAndCreateContact(currentUserId, id); // 每5秒执行一次第一个功能，使用第二个功能的 userIds 作为 contact_id
+    const fetchContacts = async () => {
+      const token = Cookies.get("authToken");
+      if (!token) {
+        console.error("No auth token found");
+        return;
+      }
+      console.log(`Fetching contacts with token: ${token}`);
+      try {
+        const response = await axios.get("http://106.52.158.123:5000/api/contacts", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         });
-      }, 5000);
+        console.log(`Fetched contacts:`, response.data);
+        const contactDetails = await Promise.all(response.data.map(async (contact) => {
+          const userResponse = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${contact.contact_id}`);
+          return { ...contact, ...userResponse.data };
+        }));
+        setContacts(contactDetails.sort((a, b) => new Date(b.last_message_time) - new Date(a.last_message_time)));
+      } catch (error) {
+        console.error("Error fetching contacts:", error);
+      }
+    };
 
-      return () => clearInterval(intervalId); // 清除定时器
+    fetchContacts();
+    if (contact_id && contact_id !== currentUserId) {
+      setSelectedContact(contacts.find(contact => contact.contact_id === contact_id)); // 仅当 contact_id 存在且不同于 user_id 时设置选中的联系人
     }
-  }, [currentUserId, contact_id, userIds]);
+  }, [contact_id]); // 确保目标用户 ID 变化时重新获取信息
 
   useEffect(() => {
-    if (currentUserId) {
-      getUserIds(currentUserId); // 第二个功能时刻执行
-      const intervalId = setInterval(() => {
-        getUserIds(currentUserId); // 每5秒执行一次第二个功能
-      }, 5000);
+    const intervalId = setInterval(() => {
+      getUserIds(currentUserId);
+    }, 5000);
 
-      return () => clearInterval(intervalId); // 清除定时器
-    }
+    return () => clearInterval(intervalId);
   }, [currentUserId]);
 
   const getUserIds = async (contactId) => {
-    const token = Cookies.get("authToken");
-    if (!token) {
-      console.error("No auth token found");
-      return;
-    }
     try {
+      const token = Cookies.get("authToken");
+      if (!token) {
+        console.error("No auth token found");
+        return;
+      }
+
       const response = await axios.post("http://106.52.158.123:5000/api/user_contacts", {
-        contactId,
+        userId: contactId,
+        contactId: currentUserId
       }, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      console.log("Fetched user IDs for contact ID:", response.data);
-      setUserIds(response.data.map(user => user.user_id));
+
+      const userIds = response.data.map(contact => contact.contact_id);
+      userIds.forEach(async userId => {
+        await checkAndCreateContact(currentUserId, userId);
+      });
     } catch (error) {
       console.error("Error fetching user IDs:", error);
     }
   };
 
   const checkAndCreateContact = async (userId, contactId) => {
-    const token = Cookies.get("authToken");
-    if (!token) {
-      console.error("No auth token found");
-      return;
-    }
+    if (userId === contactId) return; // 确保 user_id 和 contact_id 不相同
     try {
+      const token = Cookies.get("authToken");
+      if (!token) {
+        console.error("No auth token found");
+        return;
+      }
+
       const response = await axios.post("http://106.52.158.123:5000/api/user_contacts", {
         userId,
-        contactId,
+        contactId
       }, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      console.log("Checked and possibly created user contact:", response.data);
-      fetchContacts(); // 获取所有联系人
-    } catch (error) {
-      console.error("Error checking and creating user contact:", error);
-    }
-  };
 
-  const fetchContacts = async () => {
-    const token = Cookies.get("authToken");
-    if (!token) {
-      console.error("No auth token found");
-      return;
-    }
-    console.log(`Fetching contacts with token: ${token}`);
-    try {
-      const response = await axios.get("http://106.52.158.123:5000/api/contacts", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      console.log(`Fetched contacts:`, response.data);
-      const contactDetails = await Promise.all(response.data.map(async (contact) => {
+      const updatedContacts = response.data;
+      const contactDetails = await Promise.all(updatedContacts.map(async (contact) => {
         const userResponse = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${contact.contact_id}`);
         return { ...contact, ...userResponse.data };
       }));
+
       setContacts(contactDetails.sort((a, b) => new Date(b.last_message_time) - new Date(a.last_message_time)));
     } catch (error) {
-      console.error("Error fetching contacts:", error);
+      console.error("Error checking and creating contact:", error);
     }
   };
-
-  useEffect(() => {
-    fetchContacts();
-  }, [currentUserId]);
-
-  useEffect(() => {
-    if (contact_id && contacts.length > 0) {
-      const selected = contacts.find(contact => contact.contact_id === contact_id);
-      setSelectedContact(selected); // 仅当 contact_id 存在时设置选中的联系人
-    }
-  }, [contact_id, contacts]);
 
   useEffect(() => {
     if (selectedContact) {
