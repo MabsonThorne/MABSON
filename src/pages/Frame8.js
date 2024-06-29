@@ -7,9 +7,9 @@ import FrameComponent4 from "../components/FrameComponent4";
 
 const Frame8 = () => {
   const navigate = useNavigate();
-  const { id: currentUserId } = useParams(); // 从 URL 获取当前用户 ID
+  const { id: currentUserId } = useParams();
   const location = useLocation();
-  const { contact_id } = location.state || {}; // 从传递的 state 中获取 contact_id
+  const { contact_id } = location.state || {};
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
@@ -35,7 +35,6 @@ const Frame8 = () => {
         console.log("No matching user IDs found.");
         return [];
       }
-      console.log("Fetched user IDs:", response.data);
       return response.data.map(contact => contact.user_id);
     } catch (error) {
       console.error("Error fetching user IDs:", error);
@@ -49,14 +48,12 @@ const Frame8 = () => {
       console.error("No auth token found");
       return;
     }
-    console.log(`Fetching contacts with token: ${token}`);
     try {
       const response = await axios.get("http://106.52.158.123:5000/api/contacts", {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      console.log(`Fetched contacts:`, response.data);
 
       const allContactIds = [...response.data.map(contact => contact.contact_id), ...additionalContactIds];
       const uniqueContactIds = [...new Set(allContactIds)];
@@ -81,7 +78,7 @@ const Frame8 = () => {
     if (message.trim() && selectedContact) {
       try {
         const newMessage = { sender_id: currentUserId, receiver_id: selectedContact.contact_id, message };
-        setChatMessages([...chatMessages, newMessage]); // 立即显示消息
+        setChatMessages([...chatMessages, newMessage]);
         setMessage("");
         await axios.post(`http://106.52.158.123:5000/api/chat/${selectedContact.contact_id}`, newMessage, {
           headers: {
@@ -89,7 +86,6 @@ const Frame8 = () => {
           }
         });
 
-        // 在发送消息后，检查并更新contacts
         const response = await axios.post(
           "http://106.52.158.123:5000/api/user_contacts",
           { userId: currentUserId, contactId: selectedContact.contact_id },
@@ -100,7 +96,7 @@ const Frame8 = () => {
           fetchContacts(response.data.map(contact => contact.contact_id));
         }
 
-        fetchChatMessages(selectedContact.contact_id, token); // 确保消息发送成功后刷新消息列表
+        fetchChatMessages(selectedContact.contact_id, token);
       } catch (error) {
         console.error("Error sending message:", error);
       }
@@ -116,7 +112,7 @@ const Frame8 = () => {
   useEffect(() => {
     const interval = setInterval(async () => {
       const userIds = await getUserIds();
-      const additionalContactIds = userIds.filter(id => id !== currentUserId); // 过滤掉当前页面的id
+      const additionalContactIds = userIds.filter(id => id !== currentUserId);
       if (additionalContactIds.length > 0) {
         setNewUserCount(additionalContactIds.length);
         fetchContacts(additionalContactIds);
@@ -178,8 +174,8 @@ const Frame8 = () => {
 
   const handleSelectContact = (contact) => {
     setSelectedContact(contact);
-    setShowUserInfo(false); // Reset user info panel state
-    setChatMessages([]); // Reset chat messages
+    setShowUserInfo(false);
+    setChatMessages([]);
     const token = Cookies.get("authToken");
     if (!token) {
       console.error("No auth token found");
@@ -240,7 +236,7 @@ const Frame8 = () => {
           <div className="p-4 border-b border-gray-300">
             <TextField
               className="w-full"
-              placeholder="Search chats"
+              placeholder="搜索聊天"
               variant="outlined"
               sx={{
                 "& fieldset": { borderColor: "#e0e0e0" },
@@ -292,7 +288,7 @@ const Frame8 = () => {
                 <img className="w-10 h-10 rounded-full shadow-md" alt="Avatar" src={selectedContact.avatar_file} />
                 <div className="ml-4">
                   <div className="font-bold">{selectedContact.username}</div>
-                  <div className="text-sm text-gray-500">Active 20m ago</div>
+                  <div className="text-sm text-gray-500">20分钟前活跃</div>
                 </div>
               </div>
             )}
@@ -355,7 +351,7 @@ const Frame8 = () => {
             <div className="flex flex-col items-center">
               <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
               <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
-              <div className="text-sm text-gray-500 mb-4">Active 20m ago</div>
+              <div className="text-sm text-gray-500 mb-4">20分钟前活跃</div>
               <Button
                 className="w-full bg-red-500 text-white rounded-full"
                 disableElevation
