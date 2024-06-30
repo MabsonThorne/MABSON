@@ -8,7 +8,7 @@ import FrameComponent4 from "../components/FrameComponent4";
 const Frame8 = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const currentUserId = parseInt(id, 10); // 确保 currentUserId 是一个整数
+  const currentUserId = parseInt(id, 10); // Ensure currentUserId is an integer
   const location = useLocation();
   const { contact_id: otherContactId } = location.state || {};
   const [contacts, setContacts] = useState([]);
@@ -18,6 +18,8 @@ const Frame8 = () => {
   const [message, setMessage] = useState("");
   const [userInfo, setUserInfo] = useState(null);
   const [showUserInfo, setShowUserInfo] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [contactTyping, setContactTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const [newUserCount, setNewUserCount] = useState(0);
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
@@ -28,6 +30,7 @@ const Frame8 = () => {
       addContactIfNotExist(otherContactId);
     }
     fetchContacts();
+    notifyUserOpenedSite(); // Notify the backend that the user opened the site
   }, [otherContactId]);
 
   useEffect(() => {
@@ -41,6 +44,7 @@ const Frame8 = () => {
           return;
         }
         fetchChatMessages(selectedContact.contact_id, token);
+        checkUserOnlineStatus(selectedContact.contact_id);
       }
     }, 5000);
 
@@ -55,8 +59,26 @@ const Frame8 = () => {
         return;
       }
       fetchChatMessages(selectedContact.contact_id, token);
+      checkUserOnlineStatus(selectedContact.contact_id);
     }
   }, [selectedContact]);
+
+  const notifyUserOpenedSite = async () => {
+    const token = Cookies.get("authToken");
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
+    try {
+      await axios.post(`http://106.52.158.123:5000/api/user_opened_site/${currentUserId}`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+    } catch (error) {
+      console.error("Error notifying user opened site:", error);
+    }
+  };
 
   const fetchContacts = async () => {
     const token = Cookies.get("authToken");
@@ -137,7 +159,6 @@ const Frame8 = () => {
           Authorization: `Bearer ${token}`
         }
       });
-      console.log("Fetched messages:", response.data);  // Add debug log
       setChatMessages(response.data);
       scrollToBottom();
     } catch (error) {
@@ -154,7 +175,6 @@ const Frame8 = () => {
     if (message.trim() && selectedContact) {
       try {
         const newMessage = { sender_id: currentUserId, receiver_id: selectedContact.contact_id, message };
-        console.log("Sending message:", newMessage);  // Add debug log
         setChatMessages((prevMessages) => [...prevMessages, newMessage]);
         setMessage("");
         await axios.post(`http://106.52.158.123:5000/api/chat/${selectedContact.contact_id}`, newMessage, {
@@ -173,6 +193,36 @@ const Frame8 = () => {
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       handleSendMessage();
+    } else {
+      setIsTyping(true);
+      notifyTyping(true);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsTyping(false);
+    notifyTyping(false);
+  };
+
+  const notifyTyping = async (typing) => {
+    const token = Cookies.get("authToken");
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
+    if (selectedContact) {
+      try {
+        await axios.post(`http://106.52.158.123:5000/api/online_status/${currentUserId}`, {
+          online: true,
+          typing: typing
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+      } catch (error) {
+        console.error("Error updating typing status:", error);
+      }
     }
   };
 
@@ -230,6 +280,16 @@ const Frame8 = () => {
     setShowUserInfo(false);
   };
 
+  const checkUserOnlineStatus = async (contactId) => {
+    try {
+      const response = await axios.get(`http://106.52.158.123:5000/api/online_status/${contactId}`);
+      setUserInfo((prevInfo) => ({ ...prevInfo, online: response.data.online, last_active: response.data.last_active, typing: response.data.typing }));
+      setContactTyping(response.data.typing);
+    } catch (error) {
+      console.error("Error checking user online status:", error);
+    }
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -245,10 +305,29 @@ const Frame8 = () => {
     );
   };
 
+  const formatLastActiveTime = (lastActive) => {
+    const now = new Date();
+    const lastActiveDate = new Date(lastActive);
+    const diffInMinutes = Math.floor((now - lastActiveDate) / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    const diffInMonths = Math.floor(diffInDays / 30);
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}分钟前活跃`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours}小时前活跃`;
+    } else if (diffInDays < 30) {
+      return `${diffInDays}天前活跃`;
+    } else {
+      return `${diffInMonths}月前活跃`;
+    }
+  };
+
   return (
     <div className="relative flex flex-col h-screen w-full bg-gray-100">
       <FrameComponent4 newUserCount={newUserCount} />
-      <div className="flex-1 flex p-5 box-border">
+      <div className="flex-1 flex p-5 box-border" style={{ borderTop: "1px solid #e0e0e0", borderBottom: "1px solid #e0e0e0" }}>
         <div className="transition-transform duration-1000 w-1/4" style={{ borderRight: "1px solid #e0e0e0", borderLeft: "1px solid #e0e0e0" }}>
           <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid #e0e0e0", boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)" }}>
             <div className="cursor-pointer text-xl bg-gray-200 rounded-full p-2" onClick={handleBackClick}>
@@ -310,11 +389,12 @@ const Frame8 = () => {
               {selectedContact ? "<" : ">"}
             </div>
             {selectedContact && (
-              <div className="flex items-center cursor-pointer" onClick={handleShowUserInfo}>
-                <img className="w-10 h-10 rounded-full shadow-md" alt="Avatar" src={selectedContact.avatar_file} />
+              <div className="flex items-center cursor-pointer">
+                <span>{contactTyping ? "对方正在输入..." : ""}</span>
+                <img className="w-10 h-10 rounded-full shadow-md ml-2" alt="Avatar" src={selectedContact.avatar_file} onClick={handleShowUserInfo} />
                 <div className="ml-4">
                   <div className="font-bold">{selectedContact.username}</div>
-                  <div className="text-sm text-gray-500">20分钟前活跃</div>
+                  <div className="text-sm text-gray-500">{userInfo?.online ? "在线" : formatLastActiveTime(userInfo?.last_active)}</div>
                 </div>
               </div>
             )}
@@ -322,20 +402,6 @@ const Frame8 = () => {
           <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: "70vh" }}>
             {chatMessages.map((message, index) => {
               const isCurrentUser = message.sender_id === currentUserId;
-              console.log(`Rendering message ${index}: sender_id=${message.sender_id}, currentUserId=${currentUserId}, isCurrentUser=${isCurrentUser}`);
-              if (isCurrentUser) {
-                console.log("This message should be on the right");
-              } else {
-                console.log("This message should be on the left");
-              }
-
-              // Check if message is not rendering correctly and throw an error
-              if (isCurrentUser && message.sender_id !== currentUserId) {
-                throw new Error(`Message ${index} should be on the right but is rendering on the left`);
-              } else if (!isCurrentUser && message.sender_id === currentUserId) {
-                throw new Error(`Message ${index} should be on the left but is rendering on the right`);
-              }
-
               return (
                 <div key={index} className={`flex ${isCurrentUser ? "justify-end" : "justify-start"} mb-4`}>
                   <div
@@ -356,7 +422,7 @@ const Frame8 = () => {
             })}
             <div ref={messagesEndRef} />
           </div>
-          <div className="flex items-center p-4 relative" style={{ borderTop: "1px solid #e0e0e0" }}>
+          <div className="flex items-center p-4 relative" style={{ borderTop: "1px solid #e0e0e0", borderBottom: "1px solid #e0e0e0" }}>
             <div className="icon-button mic-icon mr-2"></div>
             <TextField
               className="flex-1"
@@ -365,6 +431,8 @@ const Frame8 = () => {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyPress={handleKeyPress}
+              onFocus={() => setIsTyping(true)}
+              onBlur={handleBlur}
               sx={{
                 "& fieldset": { borderColor: "#e0e0e0" },
                 "& .MuiInputBase-root": {
@@ -415,7 +483,7 @@ const Frame8 = () => {
           </div>
           <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
           <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
-          <div className="text-sm text-gray-500 mb-4">20分钟前活跃</div>
+          <div className="text-sm text-gray-500 mb-4">{userInfo?.online ? "在线" : formatLastActiveTime(userInfo?.last_active)}</div>
           <Button
             className="w-full bg-red-500 text-white rounded-full"
             disableElevation
