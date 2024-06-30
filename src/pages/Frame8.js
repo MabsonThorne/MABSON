@@ -400,28 +400,31 @@ const Frame8 = () => {
           </div>
         </div>
         {showUserInfo && (
-          <div className={`fixed top-0 right-0 h-full transition-transform duration-1000 transform ${showUserInfo ? "translate-x-0" : "translate-x-full"} bg-white border-l shadow-lg p-4 w-1/3`} style={{ borderColor: "#e0e0e0" }}>
-            <div className="flex flex-col items-center">
-              <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
-              <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
-              <div className="text-sm text-gray-500 mb-4">20分钟前活跃</div>
-              <Button
-                className="w-full bg-red-500 text-white rounded-full"
-                disableElevation
-                variant="contained"
-                onClick={handleSellClick}
-                sx={{ 
-                  textTransform: "none", 
-                  backgroundColor: "#ff0000", 
-                  "&:hover": { 
-                    backgroundColor: "#ff0000",
-                    boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)" 
-                  } 
-                }}
-              >
-                {userInfo?.gender === "female" ? "她卖过的" : "他卖过的"}
-              </Button>
+          <div className={`fixed top-0 right-0 h-full transition-transform duration-1000 transform ${showUserInfo ? "translate-x-0" : "translate-x-full"} bg-white border-l shadow-lg p-4 w-1/3 flex flex-col items-center`} style={{ borderColor: "#e0e0e0" }}>
+            <div className="flex items-center w-full mb-4">
+              <div className="cursor-pointer text-xl" onClick={handleHideUserInfo}>
+                {"<"}
+              </div>
             </div>
+            <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
+            <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
+            <div className="text-sm text-gray-500 mb-4">20分钟前活跃</div>
+            <Button
+              className="w-full bg-red-500 text-white rounded-full"
+              disableElevation
+              variant="contained"
+              onClick={handleSellClick}
+              sx={{ 
+                textTransform: "none", 
+                backgroundColor: "#ff0000", 
+                "&:hover": { 
+                  backgroundColor: "#ff0000",
+                  boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)" 
+                } 
+              }}
+            >
+              {userInfo?.gender === "female" ? "她卖过的" : "他卖过的"}
+            </Button>
           </div>
         )}
       </div>
@@ -453,15 +456,6 @@ const Frame8 = () => {
           content: "+";
         }
 
-        .fixed-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          z-index: 10;
-        }
-
         .shadow-lg {
           box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
         }
@@ -481,7 +475,6 @@ const Frame8 = () => {
           z-index: 1;
         }
       `}</style>
-      {showUserInfo && <div className="fixed-overlay" onClick={handleHideUserInfo}></div>}
     </div>
   );
 };
