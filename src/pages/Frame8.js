@@ -15,6 +15,7 @@ const Frame8 = () => {
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
+  const [translatedMessages, setTranslatedMessages] = useState({});
   const [message, setMessage] = useState("");
   const [userInfo, setUserInfo] = useState(null);
   const [showUserInfo, setShowUserInfo] = useState(false);
@@ -159,10 +160,55 @@ const Frame8 = () => {
           Authorization: `Bearer ${token}`
         }
       });
-      setChatMessages(response.data);
+      const messages = response.data;
+      setChatMessages(messages);
+      messages.forEach(async (message) => {
+        if (message.sender_id !== currentUserId) {
+          await checkAndTranslateMessage(message);
+        }
+      });
       scrollToBottom();
     } catch (error) {
       console.error("Error fetching chat messages:", error);
+    }
+  };
+
+  const checkAndTranslateMessage = async (message) => {
+    const currentLanguage = navigator.language || navigator.userLanguage;
+    const messageLanguage = await detectLanguage(message.message);
+    if (currentLanguage !== messageLanguage) {
+      const translatedText = await translateMessage(message.message, messageLanguage, currentLanguage);
+      setTranslatedMessages(prev => ({ ...prev, [message.id]: translatedText }));
+    }
+  };
+
+  const detectLanguage = async (text) => {
+    try {
+      const response = await axios.post('https://api.cognitive.microsofttranslator.com/detect?api-version=3.0', [{ Text: text }], {
+        headers: {
+          'Ocp-Apim-Subscription-Key': 'your_subscription_key',
+          'Ocp-Apim-Subscription-Region': 'your_region',
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.data[0].language;
+    } catch (error) {
+      console.error("Error detecting language:", error);
+      return 'zh'; // Default to Chinese if detection fails
+    }
+  };
+
+  const translateMessage = async (message, fromLang, toLang) => {
+    try {
+      const response = await axios.post(`http://localhost:5000/api/translate`, {
+        text: message,
+        from: fromLang,
+        to: toLang
+      });
+      return response.data.translatedText;
+    } catch (error) {
+      console.error('Error translating message:', error);
+      return message;
     }
   };
 
@@ -361,7 +407,7 @@ const Frame8 = () => {
             {filteredContacts.map((contact, index) => (
               <div
                 key={index}
-                className={`flex items-center p-2 relative cursor-pointer ${selectedContact?.contact_id === contact.contact_id ? "bg-gray-200" : ""}`}
+                className={`flex items-center p-2 relative cursor-pointer ${selectedContact?.contact_id === contact.contact_id ? "bg-gray-400" : ""}`}
                 style={{ borderBottom: "1px solid #e0e0e0" }}
                 onClick={() => handleSelectContact(contact)}
               >
@@ -403,7 +449,7 @@ const Frame8 = () => {
             {chatMessages.map((message, index) => {
               const isCurrentUser = message.sender_id === currentUserId;
               return (
-                <div key={index} className={`flex ${isCurrentUser ? "justify-end" : "justify-start"} mb-4`}>
+                <div key={index} className={`flex flex-col ${isCurrentUser ? "items-end" : "items-start"} mb-4`}>
                   <div
                     className={`p-4 max-w-2/3 break-words bubble ${isCurrentUser ? "bg-pink-200" : "bg-gray-200"}`}
                     style={{
@@ -417,6 +463,22 @@ const Frame8 = () => {
                   >
                     {message.message}
                   </div>
+                  {!isCurrentUser && translatedMessages[message.id] && (
+                    <div
+                      className="p-4 max-w-2/3 break-words bg-yellow-200 relative"
+                      style={{
+                        borderRadius: "20px",
+                        padding: "10px 20px",
+                        wordWrap: "break-word",
+                        whiteSpace: "pre-wrap",
+                        marginLeft: "10px",
+                        position: "relative"
+                      }}
+                    >
+                      {translatedMessages[message.id]}
+                      <span style={{ fontSize: "10px", color: "#666", position: "absolute", right: "10px", bottom: "5px" }}>AI翻译</span>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -575,6 +637,14 @@ const Frame8 = () => {
 
         .justify-start .bubble {
           background-color: #f1f1f1;
+        }
+
+        .flex.items-center.p-2.relative.cursor-pointer.bg-gray-200 {
+          background-color: #f1f1f1;
+        }
+
+        .flex.items-center.p-2.relative.cursor-pointer.bg-gray-400 {
+          background-color: #cccccc;
         }
       `}</style>
     </div>
