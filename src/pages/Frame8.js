@@ -21,6 +21,7 @@ const Frame8 = () => {
   const [newUserCount, setNewUserCount] = useState(0);
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
   const searchInputRef = useRef(null);
+  const contactsRef = useRef(null);
 
   const fetchContacts = async () => {
     const token = Cookies.get("authToken");
@@ -256,11 +257,16 @@ const Frame8 = () => {
   };
 
   const handleClickOutside = (event) => {
-    if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
-      setFilteredContacts(contacts);
+    if (
+      searchInputRef.current && 
+      !searchInputRef.current.contains(event.target) &&
+      contactsRef.current && 
+      !contactsRef.current.contains(event.target)
+    ) {
+      setFilteredContacts(contacts); 
     }
     if (showAdditionalOptions && !event.target.closest(".additional-options")) {
-      setShowAdditionalOptions(false);
+      setShowAdditionalOptions(false); 
     }
   };
 
@@ -304,7 +310,7 @@ const Frame8 = () => {
               }}
             />
           </div>
-          <div className="overflow-y-auto">
+          <div className="overflow-y-auto" ref={contactsRef}>
             {filteredContacts.map((contact, index) => (
               <div
                 key={contact.contact_id}
