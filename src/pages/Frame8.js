@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
-import { TextField, Button } from "@mui/material";
+import { TextField, Button, MenuItem, Select } from "@mui/material";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import FrameComponent4 from "../components/FrameComponent4";
 
 const Frame8 = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const currentUserId = parseInt(id, 10); // Ensure currentUserId is an integer
+  const currentUserId = parseInt(id, 10);
   const location = useLocation();
   const { contact_id: otherContactId } = location.state || {};
   const [contacts, setContacts] = useState([]);
@@ -25,13 +25,15 @@ const Frame8 = () => {
   const [newUserCount, setNewUserCount] = useState(0);
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
   const searchInputRef = useRef(null);
+  const [selectedLanguage, setSelectedLanguage] = useState("zh");
+  const [showLanguageOptions, setShowLanguageOptions] = useState(false);
 
   useEffect(() => {
     if (otherContactId) {
       addContactIfNotExist(otherContactId);
     }
     fetchContacts();
-    notifyUserOpenedSite(); // Notify the backend that the user opened the site
+    notifyUserOpenedSite();
   }, [otherContactId]);
 
   useEffect(() => {
@@ -162,7 +164,8 @@ const Frame8 = () => {
       });
       const messages = response.data;
       setChatMessages(messages);
-      messages.forEach(async (message) => {
+      const latestMessages = messages.slice(-5);
+      latestMessages.forEach(async (message) => {
         if (message.sender_id !== currentUserId) {
           await checkAndTranslateMessage(message);
         }
@@ -174,7 +177,7 @@ const Frame8 = () => {
   };
 
   const checkAndTranslateMessage = async (message) => {
-    const currentLanguage = navigator.language || navigator.userLanguage;
+    const currentLanguage = selectedLanguage;
     const messageLanguage = await detectLanguage(message.message);
     if (currentLanguage !== messageLanguage) {
       const translatedText = await translateMessage(message.message, messageLanguage, currentLanguage);
@@ -194,7 +197,7 @@ const Frame8 = () => {
       return response.data[0].language;
     } catch (error) {
       console.error("Error detecting language:", error);
-      return 'zh'; // Default to Chinese if detection fails
+      return 'zh';
     }
   };
 
@@ -370,6 +373,18 @@ const Frame8 = () => {
     }
   };
 
+  const toggleLanguageOptions = () => {
+    setShowLanguageOptions(!showLanguageOptions);
+  };
+
+  const handleLanguageChange = (event) => {
+    setSelectedLanguage(event.target.value);
+    setShowLanguageOptions(false);
+    if (selectedContact) {
+      fetchChatMessages(selectedContact.contact_id, Cookies.get("authToken"));
+    }
+  };
+
   return (
     <div className="relative flex flex-col h-screen w-full bg-gray-100">
       <FrameComponent4 newUserCount={newUserCount} />
@@ -442,6 +457,38 @@ const Frame8 = () => {
                   <div className="font-bold">{selectedContact.username}</div>
                   <div className="text-sm text-gray-500">{userInfo?.online ? "在线" : formatLastActiveTime(userInfo?.last_active)}</div>
                 </div>
+                <Button 
+                  onClick={toggleLanguageOptions}
+                  sx={{
+                    marginLeft: "10px",
+                    backgroundColor: "#ff0000",
+                    color: "#fff",
+                    "&:hover": {
+                      backgroundColor: "#ff0000",
+                      boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)"
+                    }
+                  }}
+                >
+                  {selectedLanguage === "zh" ? "中文" : selectedLanguage === "yue" ? "粤语" : "英文"}
+                </Button>
+                {showLanguageOptions && (
+                  <Select
+                    value={selectedLanguage}
+                    onChange={handleLanguageChange}
+                    sx={{
+                      position: "absolute",
+                      top: "40px",
+                      right: "10px",
+                      backgroundColor: "#fff",
+                      boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)",
+                      zIndex: 10
+                    }}
+                  >
+                    <MenuItem value="zh">中文</MenuItem>
+                    <MenuItem value="yue">粤语</MenuItem>
+                    <MenuItem value="en">英文</MenuItem>
+                  </Select>
+                )}
               </div>
             )}
           </div>
@@ -460,6 +507,7 @@ const Frame8 = () => {
                       marginRight: isCurrentUser ? "10px" : "0",
                       marginLeft: !isCurrentUser ? "10px" : "0"
                     }}
+                    onClick={() => console.log("Message clicked:", message)}
                   >
                     {message.message}
                   </div>
@@ -624,19 +672,19 @@ const Frame8 = () => {
         }
 
         .bubble {
-          border-radius: 15px;
+          border-radius: 20px;
           padding: 10px;
           max-width: 66%;
           word-wrap: break-word;
           white-space: pre-wrap;
         }
 
-        .justify-end .bubble {
-          background-color: #ffcccc;
+        .bubble.bg-pink-200 {
+          background-color: #f1c0c0;
         }
 
-        .justify-start .bubble {
-          background-color: #f1f1f1;
+        .bubble.bg-gray-200 {
+          background-color: #d1d1d1;
         }
 
         .flex.items-center.p-2.relative.cursor-pointer.bg-gray-200 {
