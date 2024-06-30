@@ -21,7 +21,6 @@ const Frame8 = () => {
   const [newUserCount, setNewUserCount] = useState(0);
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
   const searchInputRef = useRef(null);
-  const contactsRef = useRef(null);
 
   const fetchContacts = async () => {
     const token = Cookies.get("authToken");
@@ -219,7 +218,6 @@ const Frame8 = () => {
         }
       });
       setContacts(contacts.filter(contact => contact.contact_id !== contactId));
-      setFilteredContacts(filteredContacts.filter(contact => contact.contact_id !== contactId));
     } catch (error) {
       console.error("Error deleting contact:", error);
     }
@@ -256,27 +254,6 @@ const Frame8 = () => {
     );
   };
 
-  const handleClickOutside = (event) => {
-    if (
-      searchInputRef.current && 
-      !searchInputRef.current.contains(event.target) &&
-      contactsRef.current && 
-      !contactsRef.current.contains(event.target)
-    ) {
-      setFilteredContacts(contacts); 
-    }
-    if (showAdditionalOptions && !event.target.closest(".additional-options")) {
-      setShowAdditionalOptions(false); 
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener("click", handleClickOutside);
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, []);
-
   return (
     <div className="relative flex flex-col h-screen w-full bg-gray-100">
       <FrameComponent4 newUserCount={newUserCount} />
@@ -310,11 +287,11 @@ const Frame8 = () => {
               }}
             />
           </div>
-          <div className="overflow-y-auto" ref={contactsRef}>
+          <div className="overflow-y-auto p-4">
             {filteredContacts.map((contact, index) => (
               <div
-                key={contact.contact_id}
-                className={`flex items-center p-2 cursor-pointer border-b border-black ${selectedContact?.contact_id === contact.contact_id ? "bg-gray-200" : "bg-white"}`}
+                key={index}
+                className={`flex items-center p-2 border-b border-gray-200 relative cursor-pointer ${selectedContact?.contact_id === contact.contact_id ? "bg-gray-200" : ""}`}
                 onClick={() => handleSelectContact(contact)}
               >
                 <img className="w-10 h-10 rounded-full mr-4" alt="Avatar" src={contact.avatar_file} />
@@ -322,8 +299,11 @@ const Frame8 = () => {
                   <div className="font-bold">{contact.username}</div>
                   <div className="text-sm text-gray-500">{contact.last_message}</div>
                 </div>
+                {contact.newUser && (
+                  <div className="absolute right-0 w-3 h-3 bg-red-500 rounded-full mr-4" />
+                )}
                 <button
-                  className="ml-auto p-2 text-red-500"
+                  className="absolute right-0 p-2 text-red-500"
                   onClick={(e) => { e.stopPropagation(); handleDeleteContact(contact.contact_id); }}
                 >
                   X
@@ -332,7 +312,7 @@ const Frame8 = () => {
             ))}
           </div>
         </div>
-        <div className="flex-1 flex flex-col bg-white">
+        <div className={`flex-1 flex flex-col bg-white transition-transform duration-1000 ${selectedContact ? "ml-1/4" : ""}`}>
           <div className="flex items-center justify-between p-4 border-b border-gray-300">
             <div className="cursor-pointer text-xl" onClick={handleBackClick}>
               {selectedContact ? "<" : ">"}
@@ -411,7 +391,7 @@ const Frame8 = () => {
               onClick={() => setShowAdditionalOptions(!showAdditionalOptions)}
             ></div>
             {showAdditionalOptions && (
-              <div className="absolute bottom-16 right-0 bg-white shadow-lg p-4 rounded-lg flex flex-col space-y-2 z-10">
+              <div className="additional-options">
                 <div className="icon-button emoji-icon"></div>
                 <div className="icon-button image-icon"></div>
               </div>
@@ -483,6 +463,21 @@ const Frame8 = () => {
 
         .shadow-lg {
           box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .additional-options {
+          position: absolute;
+          top: -60px;
+          right: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          background-color: white;
+          border: 1px solid #ccc;
+          padding: 10px;
+          border-radius: 8px;
+          box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.25);
+          z-index: 1;
         }
       `}</style>
       {showUserInfo && <div className="fixed-overlay" onClick={handleHideUserInfo}></div>}
