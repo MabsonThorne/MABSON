@@ -258,8 +258,8 @@ const Frame8 = () => {
     <div className="relative flex flex-col h-screen w-full bg-gray-100">
       <FrameComponent4 newUserCount={newUserCount} />
       <div className="flex-1 flex p-5 box-border">
-        <div className="transition-transform duration-1000 w-1/4" style={{ borderRight: "1px solid #e0e0e0" }}>
-          <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid #e0e0e0" }}>
+        <div className="transition-transform duration-1000 w-1/4" style={{ borderRight: "1px solid #e0e0e0", borderLeft: "1px solid #e0e0e0" }}>
+          <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid #e0e0e0", boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)" }}>
             <div className="cursor-pointer text-xl bg-gray-200 rounded-full p-2" onClick={handleBackClick}>
               {"<"}
             </div>
@@ -313,8 +313,8 @@ const Frame8 = () => {
             ))}
           </div>
         </div>
-        <div className={`flex-1 flex flex-col bg-white transition-transform duration-1000 ${selectedContact ? "ml-1/4" : ""}`}>
-          <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid #e0e0e0" }}>
+        <div className={`flex-1 flex flex-col bg-white transition-transform duration-1000 ${selectedContact ? "ml-1/4" : ""}`} style={{ borderRight: "1px solid #e0e0e0" }}>
+          <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid #e0e0e0", boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)" }}>
             <div className="cursor-pointer text-xl" onClick={handleBackClick}>
               {selectedContact ? "<" : ">"}
             </div>
@@ -399,34 +399,32 @@ const Frame8 = () => {
             )}
           </div>
         </div>
-        {showUserInfo && (
-          <div className={`fixed top-0 right-0 h-full transition-transform duration-1000 transform ${showUserInfo ? "translate-x-0" : "translate-x-full"} bg-white border-l shadow-lg p-4 w-1/3 flex flex-col items-center`} style={{ borderColor: "#e0e0e0" }}>
-            <div className="flex items-center w-full mb-4">
-              <div className="cursor-pointer text-xl" onClick={handleHideUserInfo}>
-                {"<"}
-              </div>
+        <div className={`fixed top-0 right-0 h-full bg-white border-l shadow-lg p-4 w-1/3 flex flex-col items-center user-info-sidebar ${showUserInfo ? "show" : "hide"}`} style={{ borderColor: "#e0e0e0" }}>
+          <div className="flex items-center w-full mb-4">
+            <div className="cursor-pointer text-xl" onClick={handleHideUserInfo}>
+              {"<"}
             </div>
-            <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
-            <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
-            <div className="text-sm text-gray-500 mb-4">20分钟前活跃</div>
-            <Button
-              className="w-full bg-red-500 text-white rounded-full"
-              disableElevation
-              variant="contained"
-              onClick={handleSellClick}
-              sx={{ 
-                textTransform: "none", 
-                backgroundColor: "#ff0000", 
-                "&:hover": { 
-                  backgroundColor: "#ff0000",
-                  boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)" 
-                } 
-              }}
-            >
-              {userInfo?.gender === "female" ? "她卖过的" : "他卖过的"}
-            </Button>
           </div>
-        )}
+          <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
+          <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
+          <div className="text-sm text-gray-500 mb-4">20分钟前活跃</div>
+          <Button
+            className="w-full bg-red-500 text-white rounded-full"
+            disableElevation
+            variant="contained"
+            onClick={handleSellClick}
+            sx={{ 
+              textTransform: "none", 
+              backgroundColor: "#ff0000", 
+              "&:hover": { 
+                backgroundColor: "#ff0000",
+                boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)" 
+              } 
+            }}
+          >
+            {userInfo?.gender === "female" ? "她卖过的" : "他卖过的"}
+          </Button>
+        </div>
       </div>
       <style jsx>{`
         .icon-button {
@@ -473,6 +471,18 @@ const Frame8 = () => {
           border-radius: 8px;
           box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.25);
           z-index: 1;
+        }
+
+        .user-info-sidebar {
+          transition: transform 0.5s ease-in-out;
+        }
+
+        .user-info-sidebar.hide {
+          transform: translateX(100%);
+        }
+
+        .user-info-sidebar.show {
+          transform: translateX(0);
         }
       `}</style>
     </div>
