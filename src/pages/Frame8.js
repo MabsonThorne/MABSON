@@ -7,7 +7,8 @@ import FrameComponent4 from "../components/FrameComponent4";
 
 const Frame8 = () => {
   const navigate = useNavigate();
-  const { id: currentUserId } = useParams();
+  const { id } = useParams();
+  const currentUserId = parseInt(id, 10); // 确保 currentUserId 是一个整数
   const location = useLocation();
   const { contact_id: otherContactId } = location.state || {};
   const [contacts, setContacts] = useState([]);
@@ -21,66 +22,6 @@ const Frame8 = () => {
   const [newUserCount, setNewUserCount] = useState(0);
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
   const searchInputRef = useRef(null);
-
-  const fetchContacts = async () => {
-    const token = Cookies.get("authToken");
-    if (!token) {
-      console.error("No auth token found");
-      return;
-    }
-    try {
-      const response = await axios.get(`http://106.52.158.123:5000/api/contacts/${currentUserId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      const contactDetails = await Promise.all(response.data.map(async (contact) => {
-        const userResponse = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${contact.contact_id}`);
-        return { contact_id: contact.contact_id, ...userResponse.data };
-      }));
-
-      setContacts(contactDetails);
-      setFilteredContacts(contactDetails);
-    } catch (error) {
-      console.error("Error fetching contacts:", error);
-    }
-  };
-
-  const handleSendMessage = async () => {
-    const token = Cookies.get("authToken");
-    if (!token) {
-      console.error("No auth token found");
-      return;
-    }
-    if (message.trim() && selectedContact) {
-      try {
-        const newMessage = { sender_id: currentUserId, receiver_id: selectedContact.contact_id, message };
-        setChatMessages([...chatMessages, newMessage]);
-        setMessage("");
-        await axios.post(`http://106.52.158.123:5000/api/chat/${selectedContact.contact_id}`, newMessage, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        await axios.post(
-          "http://106.52.158.123:5000/api/contacts",
-          {
-            userId: currentUserId,
-            contact_id: selectedContact.contact_id,
-            last_message: message,
-            last_message_time: new Date().toISOString()
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        fetchChatMessages(selectedContact.contact_id, token);
-      } catch (error) {
-        console.error("Error sending message:", error);
-      }
-    }
-  };
 
   useEffect(() => {
     if (otherContactId) {
@@ -117,6 +58,51 @@ const Frame8 = () => {
     }
   }, [selectedContact]);
 
+  const fetchContacts = async () => {
+    const token = Cookies.get("authToken");
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
+    try {
+      const response = await axios.get(`http://106.52.158.123:5000/api/contacts/${currentUserId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const contactDetails = await Promise.all(response.data.map(async (contact) => {
+        const userResponse = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${contact.contact_id}`);
+        return { contact_id: contact.contact_id, ...userResponse.data };
+      }));
+
+      setContacts(contactDetails);
+      setFilteredContacts(contactDetails);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    }
+  };
+
+  const fetchUserContacts = async () => {
+    const token = Cookies.get("authToken");
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
+    try {
+      const response = await axios.get(`http://106.52.158.123:5000/api/user_contacts/${currentUserId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.data.length > 0) {
+        response.data.forEach(contact => addContactIfNotExist(contact.user_id));
+      }
+    } catch (error) {
+      console.error("Error fetching user contacts:", error);
+    }
+  };
+
   const addContactIfNotExist = async (contactId) => {
     const token = Cookies.get("authToken");
     if (!token) {
@@ -151,6 +137,7 @@ const Frame8 = () => {
           Authorization: `Bearer ${token}`
         }
       });
+      console.log("Fetched messages:", response.data);  // Add debug log
       setChatMessages(response.data);
       scrollToBottom();
     } catch (error) {
@@ -158,23 +145,28 @@ const Frame8 = () => {
     }
   };
 
-  const fetchUserContacts = async () => {
+  const handleSendMessage = async () => {
     const token = Cookies.get("authToken");
     if (!token) {
       console.error("No auth token found");
       return;
     }
-    try {
-      const response = await axios.get(`http://106.52.158.123:5000/api/user_contacts/${currentUserId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      if (response.data.length > 0) {
-        response.data.forEach(contact => addContactIfNotExist(contact.user_id));
+    if (message.trim() && selectedContact) {
+      try {
+        const newMessage = { sender_id: currentUserId, receiver_id: selectedContact.contact_id, message };
+        console.log("Sending message:", newMessage);  // Add debug log
+        setChatMessages((prevMessages) => [...prevMessages, newMessage]);
+        setMessage("");
+        await axios.post(`http://106.52.158.123:5000/api/chat/${selectedContact.contact_id}`, newMessage, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        fetchChatMessages(selectedContact.contact_id, token);
+      } catch (error) {
+        console.error("Error sending message:", error);
       }
-    } catch (error) {
-      console.error("Error fetching user contacts:", error);
     }
   };
 
@@ -196,7 +188,6 @@ const Frame8 = () => {
   const handleSelectContact = (contact) => {
     setSelectedContact(contact);
     setShowUserInfo(false);
-    setChatMessages([]);
     const token = Cookies.get("authToken");
     if (!token) {
       console.error("No auth token found");
@@ -329,23 +320,40 @@ const Frame8 = () => {
             )}
           </div>
           <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: "70vh" }}>
-            {chatMessages.map((message, index) => (
-              <div key={index} className={`flex ${message.sender_id === currentUserId ? "justify-end" : "justify-start"} mb-4`}>
-                <div
-                  className={`p-4 max-w-2/3 break-words ${message.sender_id === currentUserId ? "bg-red-200 text-white" : "bg-gray-200 text-black"}`}
-                  style={{
-                    borderRadius: "20px",
-                    padding: "10px 20px",
-                    wordWrap: "break-word",
-                    whiteSpace: "pre-wrap",
-                    marginRight: message.sender_id === currentUserId ? "10px" : "0",
-                    marginLeft: message.sender_id !== currentUserId ? "10px" : "0"
-                  }}
-                >
-                  {message.message}
+            {chatMessages.map((message, index) => {
+              const isCurrentUser = message.sender_id === currentUserId;
+              console.log(`Rendering message ${index}: sender_id=${message.sender_id}, currentUserId=${currentUserId}, isCurrentUser=${isCurrentUser}`);
+              if (isCurrentUser) {
+                console.log("This message should be on the right");
+              } else {
+                console.log("This message should be on the left");
+              }
+
+              // Check if message is not rendering correctly and throw an error
+              if (isCurrentUser && message.sender_id !== currentUserId) {
+                throw new Error(`Message ${index} should be on the right but is rendering on the left`);
+              } else if (!isCurrentUser && message.sender_id === currentUserId) {
+                throw new Error(`Message ${index} should be on the left but is rendering on the right`);
+              }
+
+              return (
+                <div key={index} className={`flex ${isCurrentUser ? "justify-end" : "justify-start"} mb-4`}>
+                  <div
+                    className={`p-4 max-w-2/3 break-words bubble ${isCurrentUser ? "bg-pink-200" : "bg-gray-200"}`}
+                    style={{
+                      borderRadius: "20px",
+                      padding: "10px 20px",
+                      wordWrap: "break-word",
+                      whiteSpace: "pre-wrap",
+                      marginRight: isCurrentUser ? "10px" : "0",
+                      marginLeft: !isCurrentUser ? "10px" : "0"
+                    }}
+                  >
+                    {message.message}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             <div ref={messagesEndRef} />
           </div>
           <div className="flex items-center p-4 relative" style={{ borderTop: "1px solid #e0e0e0" }}>
@@ -419,10 +427,10 @@ const Frame8 = () => {
               "&:hover": { 
                 backgroundColor: "#ff0000",
                 boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)" 
-              } 
-            }}
-          >
-            {userInfo?.gender === "female" ? "她卖过的" : "他卖过的"}
+                } 
+              }}
+            >
+              {userInfo?.gender === "female" ? "她卖过的" : "他卖过的"}
           </Button>
         </div>
       </div>
@@ -483,6 +491,22 @@ const Frame8 = () => {
 
         .user-info-sidebar.show {
           transform: translateX(0);
+        }
+
+        .bubble {
+          border-radius: 15px;
+          padding: 10px;
+          max-width: 66%;
+          word-wrap: break-word;
+          white-space: pre-wrap;
+        }
+
+        .justify-end .bubble {
+          background-color: #ffcccc;
+        }
+
+        .justify-start .bubble {
+          background-color: #f1f1f1;
         }
       `}</style>
     </div>
