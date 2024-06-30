@@ -11,6 +11,7 @@ const Frame8 = () => {
   const location = useLocation();
   const { contact_id: otherContactId } = location.state || {};
   const [contacts, setContacts] = useState([]);
+  const [filteredContacts, setFilteredContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [message, setMessage] = useState("");
@@ -18,30 +19,10 @@ const Frame8 = () => {
   const [showUserInfo, setShowUserInfo] = useState(false);
   const messagesEndRef = useRef(null);
   const [newUserCount, setNewUserCount] = useState(0);
+  const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
+  const searchInputRef = useRef(null);
 
-  const getUserIds = async () => {
-    const token = Cookies.get("authToken");
-    if (!token) {
-      console.error("No auth token found");
-      return [];
-    }
-    try {
-      const response = await axios.get(
-        `http://106.52.158.123:5000/api/user_contacts/${currentUserId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (response.data.length === 0) {
-        console.log("No matching user IDs found.");
-        return [];
-      }
-      return response.data.map(contact => contact.user_id);
-    } catch (error) {
-      console.error("Error fetching user IDs:", error);
-      return [];
-    }
-  };
-
-  const fetchContacts = async (additionalContactIds = []) => {
+  const fetchContacts = async () => {
     const token = Cookies.get("authToken");
     if (!token) {
       console.error("No auth token found");
@@ -54,15 +35,13 @@ const Frame8 = () => {
         }
       });
 
-      const allContactIds = [...response.data.map(contact => contact.contact_id), ...additionalContactIds];
-      const uniqueContactIds = [...new Set(allContactIds)];
-
-      const contactDetails = await Promise.all(uniqueContactIds.map(async (contactId) => {
-        const userResponse = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${contactId}`);
-        return { contact_id: contactId, ...userResponse.data };
+      const contactDetails = await Promise.all(response.data.map(async (contact) => {
+        const userResponse = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${contact.contact_id}`);
+        return { contact_id: contact.contact_id, ...userResponse.data };
       }));
 
-      setContacts(contactDetails.sort((a, b) => new Date(b.last_message_time) - new Date(a.last_message_time)));
+      setContacts(contactDetails);
+      setFilteredContacts(contactDetails);
     } catch (error) {
       console.error("Error fetching contacts:", error);
     }
@@ -85,7 +64,6 @@ const Frame8 = () => {
           }
         });
 
-        // 发送消息成功后，进行查询或创建操作
         await axios.post(
           "http://106.52.158.123:5000/api/contacts",
           {
@@ -97,15 +75,6 @@ const Frame8 = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        const response = await axios.get(
-          `http://106.52.158.123:5000/api/user_contacts/${selectedContact.contact_id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        if (response.data) {
-          fetchContacts(response.data.map(contact => contact.contact_id));
-        }
-
         fetchChatMessages(selectedContact.contact_id, token);
       } catch (error) {
         console.error("Error sending message:", error);
@@ -115,24 +84,27 @@ const Frame8 = () => {
 
   useEffect(() => {
     if (otherContactId) {
-      fetchContacts([otherContactId]);
+      addContactIfNotExist(otherContactId);
     }
+    fetchContacts();
   }, [otherContactId]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
-      const userIds = await getUserIds();
-      const additionalContactIds = userIds.filter(id => id !== currentUserId);
-      if (additionalContactIds.length > 0) {
-        setNewUserCount(additionalContactIds.length);
-        fetchContacts(additionalContactIds);
-      } else {
-        setNewUserCount(0);
+      fetchContacts();
+      fetchUserContacts();
+      if (selectedContact) {
+        const token = Cookies.get("authToken");
+        if (!token) {
+          console.error("No auth token found");
+          return;
+        }
+        fetchChatMessages(selectedContact.contact_id, token);
       }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedContact]);
 
   useEffect(() => {
     if (selectedContact) {
@@ -141,18 +113,36 @@ const Frame8 = () => {
         console.error("No auth token found");
         return;
       }
-      axios.get(`http://106.52.158.123:5000/api/chat/${selectedContact.contact_id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      .then(response => {
-        setChatMessages(response.data);
-        scrollToBottom();
-      })
-      .catch(error => console.error("Error fetching chat messages:", error));
+      fetchChatMessages(selectedContact.contact_id, token);
     }
   }, [selectedContact]);
+
+  const addContactIfNotExist = async (contactId) => {
+    const token = Cookies.get("authToken");
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
+    try {
+      await axios.post(
+        "http://106.52.158.123:5000/api/contacts",
+        {
+          userId: currentUserId,
+          contact_id: contactId,
+          last_message: "",
+          last_message_time: new Date().toISOString()
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchContacts();
+    } catch (error) {
+      if (error.response && error.response.status === 409) {
+        console.log("Contact already exists");
+      } else {
+        console.error("Error adding contact:", error);
+      }
+    }
+  };
 
   const fetchChatMessages = async (contactId, token) => {
     try {
@@ -168,6 +158,26 @@ const Frame8 = () => {
     }
   };
 
+  const fetchUserContacts = async () => {
+    const token = Cookies.get("authToken");
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
+    try {
+      const response = await axios.get(`http://106.52.158.123:5000/api/user_contacts/${currentUserId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.data.length > 0) {
+        response.data.forEach(contact => addContactIfNotExist(contact.user_id));
+      }
+    } catch (error) {
+      console.error("Error fetching user contacts:", error);
+    }
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       handleSendMessage();
@@ -176,6 +186,7 @@ const Frame8 = () => {
 
   const handleBackClick = () => {
     setSelectedContact(null);
+    setChatMessages([]);
   };
 
   const handleSellClick = () => {
@@ -232,6 +243,33 @@ const Frame8 = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const handleSearchChange = (e) => {
+    const query = e.target.value.toLowerCase();
+    setFilteredContacts(
+      contacts.filter(
+        (contact) =>
+          contact.username.toLowerCase().includes(query) ||
+          contact.contact_id.toString().includes(query)
+      )
+    );
+  };
+
+  const handleClickOutside = (event) => {
+    if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+      setFilteredContacts(contacts);
+    }
+    if (showAdditionalOptions && !event.target.closest(".additional-options")) {
+      setShowAdditionalOptions(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="relative flex flex-col h-screen w-full bg-gray-100">
       <FrameComponent4 newUserCount={newUserCount} />
@@ -248,6 +286,8 @@ const Frame8 = () => {
               className="w-full"
               placeholder="搜索聊天"
               variant="outlined"
+              inputRef={searchInputRef}
+              onChange={handleSearchChange}
               sx={{
                 "& fieldset": { borderColor: "#e0e0e0" },
                 "& .MuiInputBase-root": {
@@ -264,7 +304,7 @@ const Frame8 = () => {
             />
           </div>
           <div className="overflow-y-auto p-4">
-            {contacts.map((contact, index) => (
+            {filteredContacts.map((contact, index) => (
               <div
                 key={index}
                 className={`flex items-center p-2 border-b border-gray-200 relative cursor-pointer ${selectedContact?.contact_id === contact.contact_id ? "bg-gray-200" : ""}`}
@@ -306,14 +346,25 @@ const Frame8 = () => {
           <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: "70vh" }}>
             {chatMessages.map((message, index) => (
               <div key={index} className={`flex ${message.sender_id === currentUserId ? "justify-end" : "justify-start"} mb-4`}>
-                <div className={`p-4 rounded-lg max-w-2/3 break-words ${message.sender_id === currentUserId ? "bg-red-200 text-white" : "bg-gray-200 text-black"}`}>
+                <div
+                  className={`p-4 max-w-2/3 break-words ${message.sender_id === currentUserId ? "bg-red-200 text-white" : "bg-gray-200 text-black"}`}
+                  style={{
+                    borderRadius: "20px",
+                    padding: "10px 20px",
+                    wordWrap: "break-word",
+                    whiteSpace: "pre-wrap",
+                    marginRight: message.sender_id === currentUserId ? "10px" : "0",
+                    marginLeft: message.sender_id !== currentUserId ? "10px" : "0"
+                  }}
+                >
                   {message.message}
                 </div>
               </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
-          <div className="flex items-center p-4 border-t border-gray-300">
+          <div className="flex items-center p-4 border-t border-gray-300 relative">
+            <div className="icon-button mic-icon mr-2"></div>
             <TextField
               className="flex-1"
               placeholder="输入消息"
@@ -351,9 +402,16 @@ const Frame8 = () => {
             >
               发送
             </Button>
-            <div className="icon-button ml-2 mic-icon"></div>
-            <div className="icon-button ml-2 emoji-icon"></div>
-            <div className="icon-button ml-2 image-icon"></div>
+            <div
+              className="icon-button ml-2 add-icon"
+              onClick={() => setShowAdditionalOptions(!showAdditionalOptions)}
+            ></div>
+            {showAdditionalOptions && (
+              <div className="additional-options">
+                <div className="icon-button emoji-icon"></div>
+                <div className="icon-button image-icon"></div>
+              </div>
+            )}
           </div>
         </div>
         {showUserInfo && (
@@ -382,8 +440,7 @@ const Frame8 = () => {
           </div>
         )}
       </div>
-      <style jsx>{
-        `
+      <style jsx>{`
         .icon-button {
           cursor: pointer;
           width: 24px;
@@ -407,6 +464,10 @@ const Frame8 = () => {
           content: "📷";
         }
 
+        .icon-button.add-icon::before {
+          content: "+";
+        }
+
         .fixed-overlay {
           position: fixed;
           top: 0;
@@ -419,8 +480,22 @@ const Frame8 = () => {
         .shadow-lg {
           box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
         }
-        `
-      }</style>
+
+        .additional-options {
+          position: absolute;
+          top: -60px;
+          right: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          background-color: white;
+          border: 1px solid #ccc;
+          padding: 10px;
+          border-radius: 8px;
+          box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.25);
+          z-index: 1;
+        }
+      `}</style>
       {showUserInfo && <div className="fixed-overlay" onClick={handleHideUserInfo}></div>}
     </div>
   );
