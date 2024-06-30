@@ -257,15 +257,15 @@ const Frame8 = () => {
   return (
     <div className="relative flex flex-col h-screen w-full bg-gray-100">
       <FrameComponent4 newUserCount={newUserCount} />
-      <div className="flex-1 flex p-5 box-border border-t border-gray-300">
-        <div className="transition-transform duration-1000 w-1/4 border-r border-gray-300">
-          <div className="flex items-center justify-between p-4 border-b border-gray-300">
+      <div className="flex-1 flex p-5 box-border">
+        <div className="transition-transform duration-1000 w-1/4" style={{ borderRight: "1px solid #e0e0e0" }}>
+          <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid #e0e0e0" }}>
             <div className="cursor-pointer text-xl bg-gray-200 rounded-full p-2" onClick={handleBackClick}>
               {"<"}
             </div>
             <div className="text-lg font-bold">沟通过的人</div>
           </div>
-          <div className="p-4 border-b border-gray-300">
+          <div className="p-4" style={{ borderBottom: "1px solid #e0e0e0" }}>
             <TextField
               className="w-full"
               placeholder="搜索聊天"
@@ -291,7 +291,8 @@ const Frame8 = () => {
             {filteredContacts.map((contact, index) => (
               <div
                 key={index}
-                className={`flex items-center p-2 border-b border-gray-200 relative cursor-pointer ${selectedContact?.contact_id === contact.contact_id ? "bg-gray-200" : ""}`}
+                className={`flex items-center p-2 relative cursor-pointer ${selectedContact?.contact_id === contact.contact_id ? "bg-gray-200" : ""}`}
+                style={{ borderBottom: "1px solid #e0e0e0" }}
                 onClick={() => handleSelectContact(contact)}
               >
                 <img className="w-10 h-10 rounded-full mr-4" alt="Avatar" src={contact.avatar_file} />
@@ -313,7 +314,7 @@ const Frame8 = () => {
           </div>
         </div>
         <div className={`flex-1 flex flex-col bg-white transition-transform duration-1000 ${selectedContact ? "ml-1/4" : ""}`}>
-          <div className="flex items-center justify-between p-4 border-b border-gray-300">
+          <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid #e0e0e0" }}>
             <div className="cursor-pointer text-xl" onClick={handleBackClick}>
               {selectedContact ? "<" : ">"}
             </div>
@@ -347,7 +348,7 @@ const Frame8 = () => {
             ))}
             <div ref={messagesEndRef} />
           </div>
-          <div className="flex items-center p-4 border-t border-gray-300 relative">
+          <div className="flex items-center p-4 relative" style={{ borderTop: "1px solid #e0e0e0" }}>
             <div className="icon-button mic-icon mr-2"></div>
             <TextField
               className="flex-1"
@@ -399,7 +400,7 @@ const Frame8 = () => {
           </div>
         </div>
         {showUserInfo && (
-          <div className={`fixed top-0 right-0 h-full transition-transform duration-1000 transform ${showUserInfo ? "translate-x-0" : "translate-x-full"} bg-white border-l border-gray-300 shadow-lg p-4 w-1/3`}>
+          <div className={`fixed top-0 right-0 h-full transition-transform duration-1000 transform ${showUserInfo ? "translate-x-0" : "translate-x-full"} bg-white border-l shadow-lg p-4 w-1/3`} style={{ borderColor: "#e0e0e0" }}>
             <div className="flex flex-col items-center">
               <img className="w-20 h-20 rounded-full mb-4 shadow-md" alt="User Avatar" src={userInfo?.avatar_file} />
               <div className="text-lg font-bold mb-2">{userInfo?.username}</div>
