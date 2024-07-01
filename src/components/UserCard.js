@@ -8,9 +8,13 @@ const UserCard = ({ className = "", userId, propWidth, propMinWidth }) => {
   const cardStyle = useMemo(() => ({
     width: propWidth,
     minWidth: propMinWidth,
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19)',
-    borderRadius: '15px' // 添加圆角效果
+    borderRadius: '15px', // 添加圆角效果
+    backgroundColor: 'white', // 白色背景
+    border: '1px solid #ccc', // 添加边框
+    padding: '10px', // 添加内边距
+    cursor: 'pointer' // 鼠标悬停时显示指针
   }), [propWidth, propMinWidth]);
+
   const [userData, setUserData] = useState({ avatar: '', name: '', bio: '', rating: '' });
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -47,7 +51,7 @@ const UserCard = ({ className = "", userId, propWidth, propMinWidth }) => {
   return (
     <div 
       onClick={handleClick} 
-      className={`cursor-pointer flex flex-col items-start justify-start gap-6 min-w-[200px] max-w-full text-left text-xl text-black font-medium ${className}`} 
+      className={`flex flex-col items-start justify-start gap-6 min-w-[200px] max-w-full text-left text-xl text-black font-medium ${className}`} 
       style={cardStyle}
     >
       <div 
