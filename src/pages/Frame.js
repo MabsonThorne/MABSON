@@ -52,7 +52,7 @@ const Frame = () => {
   }, []);
 
   const onTextClick = useCallback(() => {
-    navigate("/1");
+    navigate("/6");
   }, [navigate]);
 
   const handleSearchChange = (event) => {
@@ -60,8 +60,19 @@ const Frame = () => {
   };
 
   const handleSearchSubmit = () => {
-    // Implement your search logic here
-    console.log("Search term:", searchTerm);
+    if (searchTerm) {
+      navigate(`/9?search=${encodeURIComponent(searchTerm)}`);
+    }
+  };
+
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      handleSearchSubmit();
+    }
+  };
+
+  const handleDemandClick = () => {
+    navigate("/7");
   };
 
   const getRandomItems = (items, numItems) => {
@@ -70,83 +81,159 @@ const Frame = () => {
   };
 
   const randomProductIds = getRandomItems(productIds, 8);
-  
+
   return (
-    <div className="w-full relative bg-white overflow-hidden flex flex-col items-start justify-start pt-[46px] px-4 pb-12 box-border gap-[100px] leading-normal tracking-normal mq450:gap-[25px] mq750:gap-[50px] mq750:px-10">
-      <section className="self-stretch flex flex-col items-start justify-start pt-0 pb-5 gap-8 max-w-full text-left text-xl text-gray-100 font-small-text mq750:gap-[15px]">
+    <div className="frame-container">
+      <section className="header-section">
         <FrameComponent4 />
         <FrameComponent2 />
-        <div className="w-full flex flex-col items-center justify-center py-0 box-border max-w-full">
-          <div className="w-full flex flex-row flex-wrap items-center justify-center gap-6 max-w-full">
-            <div className="flex-1 flex flex-col items-center justify-center pt-4 px-0 pb-0 min-w-[319px] max-w-full">
-              <TextField
-                variant="outlined"
-                fullWidth
-                placeholder="搜索"
-                value={searchTerm}
-                onChange={handleSearchChange}
-              />
-            </div>
+        <div className="search-container">
+          <div className="search-bar">
+            <TextField
+              variant="outlined"
+              fullWidth
+              placeholder="搜索"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onKeyPress={handleKeyPress}
+            />
             <Button
-              className="h-[62px] w-[124px]"
+              className="search-button"
               variant="contained"
               onClick={handleSearchSubmit}
-              sx={{
-                textTransform: "none",
-                color: "#fff",
-                fontSize: "20",
-                background: "#000",
-                borderRadius: "8px",
-                "&:hover": { 
-                  background: "#000",
-                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)"
-                },
-                width: 124,
-                height: 62,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
             >
               提交
             </Button>
           </div>
         </div>
-        <h1
-          className="m-0 w-full text-21xl leading-[110%] font-semibold font-inherit inline-block max-w-full cursor-pointer text-red mq450:text-5xl mq450:leading-[26px] mq1000:text-13xl mq1000:leading-[35px]"
-          onClick={onTextClick}
-        >
+        <h1 className="title" onClick={onTextClick}>
           <span>优质</span>
-          <span className="text-black">采购者</span>
+          <span className="highlight">采购者</span>
         </h1>
-        <div className="self-stretch flex flex-row flex-wrap items-center justify-between gap-[20px]">
-          {searcherIds.slice(0, 8).map((searcher, index) => (
-            <UserCard
-              key={index}
-              userId={searcher.id}
-              propWidth="404px"
-              propMinWidth="384px"
-            />
-          ))}
+        <div className="grid-container">
+          <div className="card-wrapper">
+            {searcherIds.slice(0, 8).map((searcher, index) => (
+              <UserCard
+                key={index}
+                userId={searcher.id}
+                propWidth="100%"
+                propMinWidth="200px"
+              />
+            ))}
+          </div>
         </div>
-        <h1
-          className="m-0 w-full text-21xl leading-[110%] font-semibold font-inherit inline-block max-w-full cursor-pointer text-red mq450:text-5xl mq450:leading-[26px] mq1000:text-13xl mq1000:leading-[35px]"
-        >
+        <h1 className="title" onClick={handleDemandClick}>
           <span>优质</span>
-          <span className="text-black">需求品</span>
+          <span className="highlight">需求品</span>
         </h1>
-        <div className="self-stretch flex flex-row flex-wrap items-center justify-between gap-[20px]">
-          {randomProductIds.map((product, index) => (
-            <ProductCard
-              key={index}
-              productId={product.id}
-              propWidth="404px"
-              propMinWidth="384px"
-            />
-          ))}
+        <div className="grid-container">
+          <div className="card-wrapper">
+            {randomProductIds.map((product, index) => (
+              <ProductCard
+                key={index}
+                productId={product.id}
+                propWidth="100%"
+                propMinWidth="200px"
+              />
+            ))}
+          </div>
         </div>
       </section>
       <FrameComponent />
+      <style jsx>{`
+        .frame-container {
+          width: 100%;
+          background-color: white;
+          padding: 46px 20px 12px;
+          box-sizing: border-box;
+        }
+
+        .header-section {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 25px;
+        }
+
+        .search-container {
+          display: flex;
+          justify-content: center;
+          width: 100%;
+        }
+
+        .search-bar {
+          display: flex;
+          gap: 10px;
+          width: 100%;
+          max-width: 600px;
+        }
+
+        .search-button {
+          background-color: black;
+          color: white;
+          text-transform: none;
+          font-size: 16px;
+          height: 56px; /* Same height as the TextField */
+          min-width: 150px; /* Increased width */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .title {
+          width: 100%;
+          text-align: left;
+          font-size: 24px;
+          font-weight: bold;
+          cursor: pointer;
+          margin-bottom: 20px;
+        }
+
+        .highlight {
+          color: red;
+        }
+
+        .grid-container {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          padding: 0 20px; /* 添加左右边框 */
+          box-sizing: border-box;
+        }
+
+        .card-wrapper {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 20px;
+          background-color: #f0f0f0; /* 浅灰色背景 */
+          padding: 10px;
+          border-radius: 8px;
+        }
+
+        @media (min-width: 1200px) {
+          .card-wrapper {
+            grid-template-columns: repeat(4, 1fr);
+          }
+        }
+
+        @media (max-width: 1200px) {
+          .card-wrapper {
+            grid-template-columns: repeat(3, 1fr);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .card-wrapper {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        @media (max-width: 480px) {
+          .card-wrapper {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+      `}</style>
     </div>
   );
 };
