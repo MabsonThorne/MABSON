@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TextField, Button, MenuItem, Select } from "@mui/material";
 import axios from "axios";
 import PropTypes from "prop-types";
@@ -12,6 +12,8 @@ const EmailRegistration = ({ className = "" }) => {
   const [isRegister, setIsRegister] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(true);
   const [isEmailChecked, setIsEmailChecked] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [countdown, setCountdown] = useState(0);
 
   const handleEmailChange = (event) => {
     setEmail(event.target.value);
@@ -28,6 +30,26 @@ const EmailRegistration = ({ className = "" }) => {
     }
   };
 
+  const sendVerificationCode = async () => {
+    try {
+      const response = await axios.post("http://106.52.158.123:5000/api/send-verification-code", { email });
+      console.log(response.data.message);
+      setCountdown(60); // 开始60秒倒计时
+    } catch (error) {
+      console.error("Error sending verification code:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setInterval(() => {
+        setCountdown((prevCountdown) => prevCountdown - 1);
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [countdown]);
+
   const handleLogin = async () => {
     if (!isEmailChecked) {
       await checkEmail();
@@ -37,7 +59,7 @@ const EmailRegistration = ({ className = "" }) => {
         const response = await axios.post("http://106.52.158.123:5000/api/login", { email, password });
         const token = response.data.token;
         console.log(`Received token: ${token}`);
-        document.cookie = `authToken=${token}; path=/;`; // 确保存储在 cookie 中
+        document.cookie = `authToken=${token}; path=/;`;
         window.location.href = "http://106.52.158.123:3000";
       } catch (error) {
         console.error("Login failed:", error);
@@ -50,12 +72,19 @@ const EmailRegistration = ({ className = "" }) => {
       alert("Passwords do not match");
       return;
     }
+
     try {
+      const verifyResponse = await axios.post("http://106.52.158.123:5000/api/verify-code", { email, code: verificationCode });
+      if (verifyResponse.data.message !== "验证成功。") {
+        alert(verifyResponse.data.message);
+        return;
+      }
+
       const response = await axios.post("http://106.52.158.123:5000/api/register", { username, email, password, role });
-      const token = response.data.token; // 假设后端在注册时也返回 token
-      document.cookie = `authToken=${token}; path=/;`; // 存储 token 到 cookie
-      localStorage.setItem("currentUser", JSON.stringify(response.data.user)); // 存储当前用户信息
-      window.location.href = `http://106.52.158.123:3000/2/${response.data.user.id}`; // 确保跳转到正确的 URL
+      const token = response.data.token;
+      document.cookie = `authToken=${token}; path=/;`;
+      localStorage.setItem("currentUser", JSON.stringify(response.data.user));
+      window.location.href = `http://106.52.158.123:3000/2/${response.data.user.id}`;
     } catch (error) {
       console.error("Registration failed:", error);
     }
@@ -71,7 +100,7 @@ const EmailRegistration = ({ className = "" }) => {
       handleLogin();
     }
   };
-  
+
   return (
     <div className={`w-[400px] flex flex-col items-start justify-start gap-[24px] max-w-full text-center text-base text-gray font-small-text ${className}`}>
       <div className="self-stretch flex flex-row items-start justify-center py-0 px-5 text-5xl text-black">
@@ -183,6 +212,43 @@ const EmailRegistration = ({ className = "" }) => {
                 "& .MuiInputBase-input": { color: "#828282" },
               }}
             />
+            <div className="flex flex-row items-center gap-[8px]">
+              <TextField
+                className="[border:none] bg-[transparent] h-10 font-small-text font-medium text-xl text-gray"
+                placeholder="验证码"
+                variant="outlined"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                sx={{
+                  "& fieldset": { borderColor: "#e0e0e0" },
+                  "& .MuiInputBase-root": {
+                    height: "40px",
+                    backgroundColor: "#fff",
+                    borderRadius: "8px",
+                    fontSize: "20px",
+                  },
+                  "& .MuiInputBase-input": { color: "#828282" },
+                }}
+              />
+              <Button
+                className="h-10 mq450:pl-5 mq450:pr-5 mq450:box-border"
+                disableElevation
+                variant="contained"
+                onClick={sendVerificationCode}
+                disabled={countdown > 0}
+                sx={{
+                  textTransform: "none",
+                  color: "#fff",
+                  fontSize: "16",
+                  background: countdown > 0 ? "#ccc" : "#ff0000",
+                  borderRadius: "8px",
+                  "&:hover": { background: countdown > 0 ? "#ccc" : "#ff0000" },
+                  height: 40,
+                }}
+              >
+                {countdown > 0 ? `重新发送(${countdown}s)` : "发送验证码"}
+              </Button>
+            </div>
             <Select
               className="[border:none] bg-[transparent] self-stretch h-10 font-small-text font-medium text-xl text-gray"
               value={role}
