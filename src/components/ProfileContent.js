@@ -35,6 +35,7 @@ const ProfileContent = ({ className = "", id }) => {
     axios.get(`http://106.52.158.123:5000/api/profile`, { withCredentials: true })
       .then(response => {
         setCurrentUserId(response.data.id);
+        console.log("Fetched current user profile:", response.data.id);
       })
       .catch(error => {
         console.error("Error fetching current user profile:", error);
@@ -45,6 +46,7 @@ const ProfileContent = ({ className = "", id }) => {
         setUserData(response.data);
         setNewUserData(response.data);
         setLoading(false);
+        console.log("Fetched user profile:", response.data);
       })
       .catch(error => {
         console.error("Error fetching user profile:", error);
@@ -55,6 +57,7 @@ const ProfileContent = ({ className = "", id }) => {
       .then(response => {
         const sortedProducts = response.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         setProducts(sortedProducts);
+        console.log("Fetched user products:", sortedProducts);
       })
       .catch(error => {
         console.error("Error fetching user products:", error);
@@ -63,6 +66,7 @@ const ProfileContent = ({ className = "", id }) => {
 
   const handleEdit = () => {
     setEditing(true);
+    console.log("Edit mode enabled");
   };
 
   const handleCancel = () => {
@@ -70,21 +74,25 @@ const ProfileContent = ({ className = "", id }) => {
     setNewUserData(userData);
     setAvatarPreview(null);
     setShowCropper(false);
+    console.log("Edit mode cancelled");
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewUserData({ ...newUserData, [name]: value });
+    console.log("New user data updated:", name, value);
   };
 
   const handleGenderChange = (gender) => {
     setNewUserData({ ...newUserData, gender });
+    console.log("Gender updated:", gender);
   };
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       try {
+        console.log("Selected avatar file:", file);
         const compressedAvatar = await imageCompression(file, {
           maxSizeMB: 1,
           maxWidthOrHeight: 800,
@@ -92,6 +100,7 @@ const ProfileContent = ({ className = "", id }) => {
         });
         setAvatar(compressedAvatar);
         setShowCropper(true);
+        console.log("Compressed avatar file:", compressedAvatar);
       } catch (error) {
         console.error('Error compressing image:', error);
       }
@@ -100,21 +109,25 @@ const ProfileContent = ({ className = "", id }) => {
 
   const handleCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
+    console.log("Crop complete:", croppedAreaPixels);
   }, []);
 
   const handleCropSubmit = useCallback(async () => {
     try {
-      const croppedImage = await getCroppedImg(
+      console.log("Starting image crop...");
+      const croppedImageBlob = await getCroppedImg(
         URL.createObjectURL(avatar),
         croppedAreaPixels
       );
-      setNewUserData({ ...newUserData, avatar_file: croppedImage });
-      setAvatarPreview(URL.createObjectURL(croppedImage));
-      setShowCropper(false);
+      setNewUserData({ ...newUserData, avatar_file: croppedImageBlob });
+      const croppedImageUrl = URL.createObjectURL(croppedImageBlob);
+      setAvatarPreview(croppedImageUrl);
+      setShowCropper(false); // Close the cropper dialog
+      console.log("Cropped image blob:", croppedImageBlob);
     } catch (e) {
       console.error('Failed to crop image', e);
     }
-  }, [avatar, croppedAreaPixels]);
+  }, [avatar, croppedAreaPixels, newUserData]);
 
   const handleSubmit = () => {
     if (
@@ -137,6 +150,8 @@ const ProfileContent = ({ className = "", id }) => {
       formData.append('avatar_file', newUserData.avatar_file);
     }
 
+    console.log("Submitting updated user data:", newUserData);
+
     axios.all([
       axios.put(`http://106.52.158.123:5000/api/users/${id}`, {
         username: newUserData.username,
@@ -153,6 +168,7 @@ const ProfileContent = ({ className = "", id }) => {
       setEditing(false);
       setAvatarPreview(null);
       window.location.reload();
+      console.log("Profile updated successfully");
     })
     .catch(error => {
       console.error("Error updating profile:", error);
