@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
-import { TextField, Button, MenuItem, Select } from "@mui/material";
+import { TextField, Button } from "@mui/material";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import FrameComponent4 from "../components/FrameComponent4";
 
@@ -26,7 +26,6 @@ const Frame8 = () => {
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
   const searchInputRef = useRef(null);
   const [selectedLanguage, setSelectedLanguage] = useState("zh");
-  const [showLanguageOptions, setShowLanguageOptions] = useState(false);
 
   useEffect(() => {
     if (otherContactId) {
@@ -167,7 +166,7 @@ const Frame8 = () => {
       const latestMessages = messages.slice(-5);
       latestMessages.forEach(async (message) => {
         if (message.sender_id !== currentUserId) {
-          await checkAndTranslateMessage(message);
+          await translateMessage(message);
         }
       });
       scrollToBottom();
@@ -176,42 +175,18 @@ const Frame8 = () => {
     }
   };
 
-  const checkAndTranslateMessage = async (message) => {
+  const translateMessage = async (message) => {
     const currentLanguage = selectedLanguage;
-    const messageLanguage = await detectLanguage(message.message);
-    if (currentLanguage !== messageLanguage) {
-      const translatedText = await translateMessage(message.message, messageLanguage, currentLanguage);
-      setTranslatedMessages(prev => ({ ...prev, [message.id]: translatedText }));
-    }
-  };
-
-  const detectLanguage = async (text) => {
     try {
-      const response = await axios.post('https://api.cognitive.microsofttranslator.com/detect?api-version=3.0', [{ Text: text }], {
-        headers: {
-          'Ocp-Apim-Subscription-Key': 'your_subscription_key',
-          'Ocp-Apim-Subscription-Region': 'your_region',
-          'Content-Type': 'application/json'
-        }
+      const response = await axios.post(`http://106.52.158.123:5000/api/translate`, {
+        text: message.message,
+        from: "auto",
+        to: currentLanguage
       });
-      return response.data[0].language;
-    } catch (error) {
-      console.error("Error detecting language:", error);
-      return 'zh';
-    }
-  };
-
-  const translateMessage = async (message, fromLang, toLang) => {
-    try {
-      const response = await axios.post(`http://localhost:5000/api/translate`, {
-        text: message,
-        from: fromLang,
-        to: toLang
-      });
-      return response.data.translatedText;
+      setTranslatedMessages(prev => ({ ...prev, [message.id]: response.data.translatedText }));
     } catch (error) {
       console.error('Error translating message:', error);
-      return message;
+      setTranslatedMessages(prev => ({ ...prev, [message.id]: message.message }));
     }
   };
 
@@ -373,13 +348,8 @@ const Frame8 = () => {
     }
   };
 
-  const toggleLanguageOptions = () => {
-    setShowLanguageOptions(!showLanguageOptions);
-  };
-
   const handleLanguageChange = (event) => {
     setSelectedLanguage(event.target.value);
-    setShowLanguageOptions(false);
     if (selectedContact) {
       fetchChatMessages(selectedContact.contact_id, Cookies.get("authToken"));
     }
@@ -450,45 +420,65 @@ const Frame8 = () => {
               {selectedContact ? "<" : ">"}
             </div>
             {selectedContact && (
-              <div className="flex items-center cursor-pointer">
+              <div className="flex items-center">
                 <span>{contactTyping ? "对方正在输入..." : ""}</span>
                 <img className="w-10 h-10 rounded-full shadow-md ml-2" alt="Avatar" src={selectedContact.avatar_file} onClick={handleShowUserInfo} />
                 <div className="ml-4">
                   <div className="font-bold">{selectedContact.username}</div>
                   <div className="text-sm text-gray-500">{userInfo?.online ? "在线" : formatLastActiveTime(userInfo?.last_active)}</div>
                 </div>
-                <Button 
-                  onClick={toggleLanguageOptions}
-                  sx={{
-                    marginLeft: "10px",
-                    backgroundColor: "#ff0000",
-                    color: "#fff",
-                    "&:hover": {
-                      backgroundColor: "#ff0000",
-                      boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)"
-                    }
-                  }}
-                >
-                  {selectedLanguage === "zh" ? "中文" : selectedLanguage === "yue" ? "粤语" : "英文"}
-                </Button>
-                {showLanguageOptions && (
-                  <Select
-                    value={selectedLanguage}
-                    onChange={handleLanguageChange}
+                <div className="language-options" style={{ display: 'flex', marginLeft: '10px' }}>
+                  <Button
+                    onClick={() => handleLanguageChange({ target: { value: 'zh' } })}
+                    variant={selectedLanguage === 'zh' ? 'contained' : 'outlined'}
                     sx={{
-                      position: "absolute",
-                      top: "40px",
-                      right: "10px",
-                      backgroundColor: "#fff",
-                      boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)",
-                      zIndex: 10
+                      textTransform: 'none',
+                      marginRight: '5px',
+                      borderColor: '#ff0000',
+                      color: selectedLanguage === 'zh' ? '#fff' : '#ff0000',
+                      backgroundColor: selectedLanguage === 'zh' ? '#ff0000' : '#fff',
+                      '&:hover': {
+                        backgroundColor: selectedLanguage === 'zh' ? '#ff0000' : '#fff',
+                        boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.25)'
+                      }
                     }}
                   >
-                    <MenuItem value="zh">中文</MenuItem>
-                    <MenuItem value="yue">粤语</MenuItem>
-                    <MenuItem value="en">英文</MenuItem>
-                  </Select>
-                )}
+                    中文
+                  </Button>
+                  <Button
+                    onClick={() => handleLanguageChange({ target: { value: 'yue' } })}
+                    variant={selectedLanguage === 'yue' ? 'contained' : 'outlined'}
+                    sx={{
+                      textTransform: 'none',
+                      marginRight: '5px',
+                      borderColor: '#ff0000',
+                      color: selectedLanguage === 'yue' ? '#fff' : '#ff0000',
+                      backgroundColor: selectedLanguage === 'yue' ? '#ff0000' : '#fff',
+                      '&:hover': {
+                        backgroundColor: selectedLanguage === 'yue' ? '#ff0000' : '#fff',
+                        boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.25)'
+                      }
+                    }}
+                  >
+                    粤语
+                  </Button>
+                  <Button
+                    onClick={() => handleLanguageChange({ target: { value: 'en' } })}
+                    variant={selectedLanguage === 'en' ? 'contained' : 'outlined'}
+                    sx={{
+                      textTransform: 'none',
+                      borderColor: '#ff0000',
+                      color: selectedLanguage === 'en' ? '#fff' : '#ff0000',
+                      backgroundColor: selectedLanguage === 'en' ? '#ff0000' : '#fff',
+                      '&:hover': {
+                        backgroundColor: selectedLanguage === 'en' ? '#ff0000' : '#fff',
+                        boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.25)'
+                      }
+                    }}
+                  >
+                    英文
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -513,7 +503,7 @@ const Frame8 = () => {
                   </div>
                   {!isCurrentUser && translatedMessages[message.id] && (
                     <div
-                      className="p-4 max-w-2/3 break-words bg-yellow-200 relative"
+                      className="p-4 max-w-2/3 break-words bg-yellow-100 relative"
                       style={{
                         borderRadius: "20px",
                         padding: "10px 20px",
@@ -524,7 +514,7 @@ const Frame8 = () => {
                       }}
                     >
                       {translatedMessages[message.id]}
-                      <span style={{ fontSize: "10px", color: "#666", position: "absolute", right: "10px", bottom: "5px" }}>AI翻译</span>
+                      <span style={{ fontSize: "10px", color: "#666", position: "absolute", right: "-10px", bottom: "5px" }}>AI翻译</span>
                     </div>
                   )}
                 </div>
@@ -684,7 +674,7 @@ const Frame8 = () => {
         }
 
         .bubble.bg-gray-200 {
-          background-color: #d1d1d1;
+          background-color: #e1e1e1;
         }
 
         .flex.items-center.p-2.relative.cursor-pointer.bg-gray-200 {
