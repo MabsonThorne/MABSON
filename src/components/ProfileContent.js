@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import ProductCard from "./ProductCard";
+import Cropper from 'react-easy-crop';
+import imageCompression from 'browser-image-compression';
+import getCroppedImg from './cropImage'; // Ensure you have this utility function
+import ProductCard from "./ProductCard"; // Importing the ProductCard component
 
 const ProfileContent = ({ className = "", id }) => {
   const [userData, setUserData] = useState(null);
@@ -14,6 +17,12 @@ const ProfileContent = ({ className = "", id }) => {
   const [showAvatar, setShowAvatar] = useState(false);
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showCropper, setShowCropper] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [avatar, setAvatar] = useState(null);
+  const fileInputRef = useRef(null);
   const itemsPerPage = 8;
   const navigate = useNavigate();
 
@@ -60,6 +69,7 @@ const ProfileContent = ({ className = "", id }) => {
     setEditing(false);
     setNewUserData(userData);
     setAvatarPreview(null);
+    setShowCropper(false);
   };
 
   const handleChange = (e) => {
@@ -71,16 +81,40 @@ const ProfileContent = ({ className = "", id }) => {
     setNewUserData({ ...newUserData, gender });
   };
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
-    setNewUserData({ ...newUserData, avatar_file: file });
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setAvatarPreview(reader.result);
-    };
-    reader.readAsDataURL(file);
+    if (file) {
+      try {
+        const compressedAvatar = await imageCompression(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 800,
+          useWebWorker: true
+        });
+        setAvatar(compressedAvatar);
+        setShowCropper(true);
+      } catch (error) {
+        console.error('Error compressing image:', error);
+      }
+    }
   };
+
+  const handleCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleCropSubmit = useCallback(async () => {
+    try {
+      const croppedImage = await getCroppedImg(
+        URL.createObjectURL(avatar),
+        croppedAreaPixels
+      );
+      setNewUserData({ ...newUserData, avatar_file: croppedImage });
+      setAvatarPreview(URL.createObjectURL(croppedImage));
+      setShowCropper(false);
+    } catch (e) {
+      console.error('Failed to crop image', e);
+    }
+  }, [avatar, croppedAreaPixels]);
 
   const handleSubmit = () => {
     if (
@@ -199,6 +233,7 @@ const ProfileContent = ({ className = "", id }) => {
                 type="file"
                 accept="image/*"
                 onChange={handleAvatarChange}
+                ref={fileInputRef}
                 style={{ display: 'none' }}
               />
             )}
@@ -313,12 +348,50 @@ const ProfileContent = ({ className = "", id }) => {
           </button>
         </div>
       </section>
+      {showCropper && (
+        <div className="cropper-modal">
+          <div className="cropper-content">
+            <button className="cropper-close-button" onClick={() => setShowCropper(false)}>X</button>
+            <div className="cropper-left">
+              <Cropper
+                image={URL.createObjectURL(avatar)}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={handleCropComplete}
+                showGrid={true}
+                style={{ containerStyle: { width: '100%', height: '100%' }, cropAreaStyle: { borderRadius: '8px' } }}
+              />
+            </div>
+            <button
+              className="cropper-complete-button py-2.5 px-4 text-white rounded-lg"
+              onClick={handleCropSubmit}
+              style={{
+                width: '100%',
+                textAlign: 'center',
+                border: 'none',
+                backgroundColor: 'red',
+                boxShadow: 'none',
+                transition: 'box-shadow 0.3s ease-in-out'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0px 8px 15px rgba(0, 0, 0, 0.3)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+            >
+              <b className="text-base font-semibold block">
+                完成
+              </b>
+            </button>
+          </div>
+        </div>
+      )}
       <style jsx>{`
         .profile-content-container {
           display: flex;
           flex-wrap: wrap;
           justify-content: space-between;
-          padding: 0 16px; /* 增加左右边距 */
+          padding: 0 16px;
         }
 
         .profile-info {
@@ -374,6 +447,60 @@ const ProfileContent = ({ className = "", id }) => {
           .product-card {
             width: calc(50% - 12px);
           }
+        }
+
+        .cropper-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        }
+
+        .cropper-content {
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          position: relative;
+          width: 60%;
+          height: 80%;
+        }
+
+        .cropper-left {
+          flex: 1;
+          position: relative;
+          width: 100%;
+          height: 70%;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+
+        .cropper-close-button {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: none;
+          border: none;
+          font-size: 24px;
+          cursor: pointer;
+        }
+
+        .cropper-complete-button {
+          margin-top: 20px;
+          background-color: red;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 10px;
+          cursor: pointer;
         }
       `}</style>
     </div>
