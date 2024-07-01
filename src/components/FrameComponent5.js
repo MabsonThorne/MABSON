@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import PropTypes from "prop-types";
 import axios from "axios";
 import imageCompression from 'browser-image-compression';
 import { FaMale, FaFemale } from "react-icons/fa";
 import Cookies from 'js-cookie';
+import Cropper from 'react-easy-crop';
+import getCroppedImg from './cropImage';
 
 const FrameComponent5 = ({ userId }) => {
   const [avatar, setAvatar] = useState(null);
+  const [croppedAvatar, setCroppedAvatar] = useState(null);
   const [bio, setBio] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -13,6 +17,12 @@ const FrameComponent5 = ({ userId }) => {
   const [gender, setGender] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showCropper, setShowCropper] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchPublicUserProfile = async () => {
@@ -42,6 +52,7 @@ const FrameComponent5 = ({ userId }) => {
           useWebWorker: true
         });
         setAvatar(compressedAvatar);
+        setShowCropper(true);
       } catch (error) {
         console.error('Error compressing image:', error);
         setError('Failed to compress image');
@@ -49,13 +60,52 @@ const FrameComponent5 = ({ userId }) => {
     }
   };
 
+  const handleAvatarClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleCropSubmit = useCallback(async () => {
+    try {
+      const croppedImage = await getCroppedImg(
+        URL.createObjectURL(avatar),
+        croppedAreaPixels
+      );
+      setCroppedAvatar(croppedImage);
+      setShowCropper(false);
+    } catch (e) {
+      console.error(e);
+      setError('Failed to crop image');
+    }
+  }, [avatar, croppedAreaPixels]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
+    if (!croppedAvatar) {
+      setError('请上传头像图片');
+      return;
+    }
 
-    if (avatar) {
-      formData.append('avatar_file', avatar);
+    if (!birthdate) {
+      setError('请选择出生日期');
+      return;
+    }
+
+    if (!gender) {
+      setError('请选择性别');
+      return;
+    }
+
+    const formData = new FormData();
+    if (croppedAvatar) {
+      formData.append('avatar_file', croppedAvatar);
     }
     formData.append('bio', bio);
     formData.append('birthdate', birthdate);
@@ -63,16 +113,15 @@ const FrameComponent5 = ({ userId }) => {
 
     try {
       const token = Cookies.get('authToken');
-      const response = await axios.put(`http://106.52.158.123:5000/api/user_profiles/${userId}`, formData, {
+      await axios.put(`http://106.52.158.123:5000/api/user_profiles/${userId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
         },
         withCredentials: true
       });
-      setSuccess("Profile updated successfully");
+      setSuccess("已成功上传请等待跳转");
 
-      // 成功更新后跳转到根页面并传递身份验证令牌
       setTimeout(() => {
         window.location.href = `http://106.52.158.123:3000?token=${token}`;
       }, 3000);
@@ -84,24 +133,26 @@ const FrameComponent5 = ({ userId }) => {
   return (
     <div className="w-full relative bg-white overflow-hidden flex flex-col items-start justify-start pt-14 px-20 pb-12 box-border gap-56 leading-normal tracking-normal text-left text-21xl text-red-200 font-small-text mq750:gap-28 mq750:px-10 mq450:gap-14">
       <section className="w-[1249px] flex flex-row items-start justify-center pt-0 px-0 pb-[166px] box-border gap-[109px] max-w-full text-left text-21xl text-gray-100 font-small-text mq750:gap-[54px] mq1050:pb-[108px] mq1050:box-border mq450:gap-[27px] mq450:pb-[70px] mq450:box-border mq1125:flex-wrap">
-        <div className="relative h-[613px] flex-1 rounded-xl max-w-full min-w-[406px] overflow-hidden bg-gray-200">
+        <div className="relative h-[613px] w-[613px] flex-1 rounded-xl overflow-hidden bg-gray-200">
           <label
             htmlFor="avatar-upload"
             className="cursor-pointer flex items-center justify-center h-full w-full rounded-xl border border-black hover:shadow-lg"
+            onClick={handleAvatarClick}
           >
-            {avatar ? (
+            {croppedAvatar ? (
               <img
                 className="absolute inset-0 w-full h-full object-cover rounded-xl"
-                src={URL.createObjectURL(avatar)}
+                src={croppedAvatar}
                 alt="Avatar Preview"
               />
             ) : (
-              <span className="text-gray-500 text-6xl">+</span>
+              <span className="text-gray-500 text-6xl">请上传头像图片</span>
             )}
           </label>
           <input
             id="avatar-upload"
             type="file"
+            ref={fileInputRef}
             className="hidden"
             accept="image/*"
             onChange={handleAvatarChange}
@@ -132,6 +183,9 @@ const FrameComponent5 = ({ userId }) => {
                   onChange={(e) => setBirthdate(e.target.value)}
                   className="ml-2"
                 />
+                {!birthdate && error === '请选择出生日期' && (
+                  <span className="text-red-500 ml-2">请选择</span>
+                )}
               </span>
             </div>
             <div className="self-stretch h-[60px] relative text-xl leading-[150%] font-medium flex items-center mq450:text-base mq450:leading-[24px]">
@@ -163,12 +217,17 @@ const FrameComponent5 = ({ userId }) => {
                     <FaFemale className="mr-1" /> 女
                   </label>
                 </div>
+                {!gender && error === '请选择性别' && (
+                  <span className="text-red-500 ml-2">请选择</span>
+                )}
               </span>
             </div>
-            {error && <div className="text-red-500">{error}</div>}
+            {error && !['请选择性别', '请选择出生日期'].includes(error) && (
+              <div className="text-red-500">{error}</div>
+            )}
             {success && <div className="text-green-500">{success}</div>}
             <button
-              className="cursor-pointer py-3.5 text-white rounded-lg"
+              className="cursor-pointer py-2.5 text-white rounded-lg"
               onClick={handleSubmit}
               style={{
                 width: '100%',
@@ -181,15 +240,123 @@ const FrameComponent5 = ({ userId }) => {
               onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0px 8px 15px rgba(0, 0, 0, 0.3)'}
               onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
             >
-              <b className="text-lg font-semibold block">
+              <b className="text-base font-semibold block">
                 完成
               </b>
             </button>
           </div>
         </div>
       </section>
+      {showCropper && (
+        <div className="cropper-modal">
+          <div className="cropper-content">
+            <button className="cropper-close-button" onClick={() => setShowCropper(false)}>X</button>
+            <div className="cropper-left">
+              <Cropper
+                image={URL.createObjectURL(avatar)}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={handleCropComplete}
+                showGrid={true}
+                style={{ containerStyle: { width: '100%', height: '100%' }, cropAreaStyle: { borderRadius: '8px' } }}
+              />
+            </div>
+            <button
+              className="cropper-complete-button py-2.5 px-4 text-white rounded-lg"
+              onClick={handleCropSubmit}
+              style={{
+                width: '100%',
+                textAlign: 'center',
+                border: 'none',
+                backgroundColor: 'red',
+                boxShadow: 'none',
+                transition: 'box-shadow 0.3s ease-in-out'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0px 8px 15px rgba(0, 0, 0, 0.3)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+            >
+              <b className="text-base font-semibold block">
+                完成
+              </b>
+            </button>
+          </div>
+        </div>
+      )}
+      <style jsx>{`
+        .cropper-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        }
+
+        .cropper-content {
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          position: relative;
+          width: 60%;
+          height: 80%;
+        }
+
+        .cropper-left {
+          flex: 1;
+          position: relative;
+          width: 100%;
+          height: 70%;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+
+        .cropper-close-button {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: none;
+          border: none;
+          font-size: 24px;
+          cursor: pointer;
+        }
+
+        .cropper-complete-button {
+          margin-top: 20px;
+          background-color: red;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 10px;
+          cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+          .cropper-content {
+            width: 90%;
+            height: 70%;
+          }
+
+          .cropper-left {
+            height: 60%;
+          }
+        }
+      `}</style>
     </div>
   );
+};
+
+FrameComponent5.propTypes = {
+  userId: PropTypes.string.isRequired,
 };
 
 export default FrameComponent5;
