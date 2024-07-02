@@ -21,7 +21,7 @@ const UserCard = ({ className = "", userId, propWidth, propMinWidth }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axios.get(`http://106.52.158.123:5000/api/basic_profile/${userId}`);
+        const response = await axios.get(`http://106.52.158.123:5000/api/profile/${userId}`);
         setUserData({
           avatar: response.data.avatar_file,
           name: response.data.username,
