@@ -3,7 +3,11 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const sharp = require('sharp');
+const fs = require('fs');
+const path = require('path');
 
+// 用户注册
 exports.register = async (req, res) => {
   const { username, password, email, role } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -25,7 +29,7 @@ exports.register = async (req, res) => {
     res.cookie('authToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 86400000, 
+      maxAge: 86400000,
       sameSite: 'strict',
     });
 
@@ -44,6 +48,7 @@ exports.register = async (req, res) => {
   }
 };
 
+// 用户登录
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -86,6 +91,7 @@ exports.login = async (req, res) => {
   }
 };
 
+// 检查邮箱是否存在
 exports.checkEmail = async (req, res) => {
   const { email } = req.body;
 
@@ -99,6 +105,7 @@ exports.checkEmail = async (req, res) => {
   }
 };
 
+// 获取所有用户
 exports.getAllUsers = async (req, res) => {
   try {
     const [users] = await db.query('SELECT * FROM users');
@@ -117,6 +124,7 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+// 获取用户资料
 exports.getUserProfile = async (req, res) => {
   const userId = req.user.id;
 
@@ -132,6 +140,7 @@ exports.getUserProfile = async (req, res) => {
   }
 };
 
+// 根据ID获取用户资料
 exports.getUserProfileById = async (req, res) => {
   const userId = req.params.id;
 
@@ -147,6 +156,7 @@ exports.getUserProfileById = async (req, res) => {
   }
 };
 
+// 更新用户资料
 exports.updateUser = async (req, res) => {
   const userId = req.params.id;
   const { username, email } = req.body;
@@ -163,6 +173,7 @@ exports.updateUser = async (req, res) => {
   }
 };
 
+// 更新用户资料和头像
 exports.updateUserProfile = async (req, res) => {
   const userId = req.params.id;
   const { bio, gender, birthdate, username, email } = req.body;
@@ -241,6 +252,7 @@ exports.updateUserProfile = async (req, res) => {
   }
 };
 
+// 获取公开用户资料
 exports.getPublicUserProfile = async (req, res) => {
   const userId = req.params.id;
 
@@ -256,10 +268,12 @@ exports.getPublicUserProfile = async (req, res) => {
   }
 };
 
+// 测试连接
 exports.testConnection = (req, res) => {
   res.send('Connection successful');
 };
 
+// 刷新令牌
 exports.refreshToken = (req, res) => {
   const { token } = req.body;
 
@@ -287,6 +301,7 @@ exports.refreshToken = (req, res) => {
   }
 };
 
+// 验证令牌
 exports.verifyToken = (req, res) => {
   const token = req.cookies.authToken;
 
@@ -302,6 +317,7 @@ exports.verifyToken = (req, res) => {
   }
 };
 
+// 获取基本用户资料
 exports.getBasicUserProfile = async (req, res) => {
   const userId = req.params.id;
 
@@ -317,6 +333,7 @@ exports.getBasicUserProfile = async (req, res) => {
   }
 };
 
+// 获取搜索者
 exports.getSearchers = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT id, username FROM users WHERE role = ?', ['searcher']);
@@ -327,6 +344,7 @@ exports.getSearchers = async (req, res) => {
   }
 };
 
+// 获取搜索者ID
 exports.getSearcherIds = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT id FROM users WHERE role = ?', ['searcher']);
