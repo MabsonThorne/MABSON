@@ -44,7 +44,9 @@ const FrameComponent7 = ({ className = "", productId }) => {
 
     const fetchUserId = async () => {
       try {
-        const response = await axios.get("http://106.52.158.123:5000/api/profile", { withCredentials: true });
+        const response = await axios.get("http://106.52.158.123:5000/api/profile", {
+          headers: { Authorization: `Bearer ${Cookies.get('authToken')}` }
+        });
         setUserId(response.data.id);
       } catch (error) {
         console.error("Error fetching user id:", error);
@@ -104,8 +106,8 @@ const FrameComponent7 = ({ className = "", productId }) => {
 
     try {
       await axios.put(`http://106.52.158.123:5000/api/products/${productId}`, formData, {
-        withCredentials: true,
         headers: {
+          "Authorization": `Bearer ${Cookies.get('authToken')}`,
           "Content-Type": "multipart/form-data",
         },
       });
