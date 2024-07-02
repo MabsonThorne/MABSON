@@ -3,9 +3,9 @@ import PropTypes from "prop-types";
 import axios from "axios";
 import imageCompression from 'browser-image-compression';
 import { FaMale, FaFemale } from "react-icons/fa";
-import Cookies from 'js-cookie';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from './cropImage';
+import Cookies from 'js-cookie';
 
 const FrameComponent5 = ({ userId }) => {
   const [avatar, setAvatar] = useState(null);
