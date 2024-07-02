@@ -176,8 +176,11 @@ exports.updateUser = async (req, res) => {
 // 更新用户资料和头像
 exports.updateUserProfile = async (req, res) => {
   const userId = req.params.id;
-  const { bio, gender, birthdate, username, email } = req.body;
+  const { bio, gender, birthdate } = req.body;
   let avatarFilePath = null;
+
+  console.log('Received request to update profile for user ID:', userId);
+  console.log('Request body:', req.body);
 
   if (req.file) {
     const inputFilePath = req.file.path;
@@ -235,14 +238,12 @@ exports.updateUserProfile = async (req, res) => {
 
     userProfileParams.push(userId);
 
+    console.log('Updating user profile with the following fields:', userProfileUpdates);
+
     if (userProfileUpdates.length > 0) {
       const updateProfileQuery = `UPDATE user_profiles SET ${userProfileUpdates.join(', ')} WHERE id = ?`;
       await db.query(updateProfileQuery, userProfileParams);
-    }
-
-    const [result] = await db.query('UPDATE users SET username = ?, email = ? WHERE id = ?', [username, email, userId]);
-    if (result.affectedRows === 0) {
-      return res.status(404).send('User not found');
+      console.log('User profile updated successfully');
     }
 
     res.send('User profile updated successfully');
