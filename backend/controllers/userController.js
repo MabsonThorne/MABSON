@@ -107,4 +107,232 @@ exports.getAllUsers = async (req, res) => {
       username: user.username,
       email: user.email,
       role: user.role,
-     
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+    }));
+    res.json(sanitizedUsers);
+  } catch (err) {
+    console.error('Error getting all users:', err);
+    res.status(500).send('Error getting all users');
+  }
+};
+
+exports.getUserProfile = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const [rows] = await db.query('SELECT * FROM user_profiles WHERE id = ?', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).send('User profile not found');
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).send('Error fetching user profile');
+  }
+};
+
+exports.getUserProfileById = async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const [rows] = await db.query('SELECT * FROM user_profiles WHERE id = ?', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).send('User profile not found');
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error fetching user profile by ID:', error);
+    res.status(500).send('Error fetching user profile by ID');
+  }
+};
+
+exports.updateUser = async (req, res) => {
+  const userId = req.params.id;
+  const { username, email } = req.body;
+
+  try {
+    const [result] = await db.query('UPDATE users SET username = ?, email = ? WHERE id = ?', [username, email, userId]);
+    if (result.affectedRows === 0) {
+      return res.status(404).send('User not found');
+    }
+    res.send('User updated successfully');
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).send('Error updating user');
+  }
+};
+
+exports.updateUserProfile = async (req, res) => {
+  const userId = req.params.id;
+  const { bio, gender, birthdate, username, email } = req.body;
+  let avatarFilePath = null;
+
+  if (req.file) {
+    const inputFilePath = req.file.path;
+    const outputFilePath = path.join('uploads', `${Date.now()}-compressed-${req.file.originalname}`);
+
+    try {
+      await sharp(inputFilePath)
+        .resize(800)
+        .jpeg({ quality: 80 })
+        .toFile(outputFilePath);
+
+      fs.unlinkSync(inputFilePath);
+      avatarFilePath = outputFilePath;
+
+      const [oldAvatarResult] = await db.query('SELECT avatar_file FROM user_profiles WHERE id = ?', [userId]);
+      if (oldAvatarResult.length > 0 && oldAvatarResult[0].avatar_file) {
+        const oldAvatarPath = path.join(__dirname, '..', oldAvatarResult[0].avatar_file);
+        if (fs.existsSync(oldAvatarPath)) {
+          fs.unlinkSync(oldAvatarPath);
+        }
+      }
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      return res.status(500).send('Error compressing image');
+    }
+  }
+
+  if (req.user.id !== parseInt(userId, 10)) {
+    return res.status(403).send('You are not authorized to update this profile');
+  }
+
+  try {
+    const userProfileUpdates = [];
+    const userProfileParams = [];
+
+    if (bio !== undefined) {
+      userProfileUpdates.push('bio = ?');
+      userProfileParams.push(bio);
+    }
+
+    if (gender !== undefined) {
+      userProfileUpdates.push('gender = ?');
+      userProfileParams.push(gender);
+    }
+
+    if (avatarFilePath !== null) {
+      userProfileUpdates.push('avatar_file = ?');
+      userProfileParams.push(avatarFilePath);
+    }
+
+    if (birthdate !== undefined) {
+      userProfileUpdates.push('birthdate = ?');
+      userProfileParams.push(birthdate);
+    }
+
+    userProfileParams.push(userId);
+
+    if (userProfileUpdates.length > 0) {
+      const updateProfileQuery = `UPDATE user_profiles SET ${userProfileUpdates.join(', ')} WHERE id = ?`;
+      await db.query(updateProfileQuery, userProfileParams);
+    }
+
+    const [result] = await db.query('UPDATE users SET username = ?, email = ? WHERE id = ?', [username, email, userId]);
+    if (result.affectedRows === 0) {
+      return res.status(404).send('User not found');
+    }
+
+    res.send('User profile updated successfully');
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).send('Error updating user profile');
+  }
+};
+
+exports.getPublicUserProfile = async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const [rows] = await db.query('SELECT username, bio, gender, birthdate, avatar_file FROM user_profiles WHERE id = ?', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).send('User profile not found');
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error fetching public user profile:', error);
+    res.status(500).send('Error fetching public user profile');
+  }
+};
+
+exports.testConnection = (req, res) => {
+  res.send('Connection successful');
+};
+
+exports.refreshToken = (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).send('No token provided');
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const newToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
+      expiresIn: '24h',
+    });
+
+    res.cookie('authToken', newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 86400000,
+      sameSite: 'strict',
+    });
+
+    res.json({ token: newToken });
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+    res.status(500).send('Error refreshing token');
+  }
+};
+
+exports.verifyToken = (req, res) => {
+  const token = req.cookies.authToken;
+
+  if (!token) {
+    return res.status(401).send('Access denied. No token provided.');
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({ valid: true, user: decoded });
+  } catch (ex) {
+    res.status(400).send('Invalid token.');
+  }
+};
+
+exports.getBasicUserProfile = async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const [rows] = await db.query('SELECT username, avatar_file FROM user_profiles WHERE id = ?', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).send('User profile not found');
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error fetching basic user profile:', error);
+    res.status(500).send('Error fetching basic user profile');
+  }
+};
+
+exports.getSearchers = async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT id, username FROM users WHERE role = ?', ['searcher']);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching searchers:', error);
+    res.status(500).send('Error fetching searchers');
+  }
+};
+
+exports.getSearcherIds = async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT id FROM users WHERE role = ?', ['searcher']);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching searcher IDs:', error);
+    res.status(500).send('Error fetching searcher IDs');
+  }
+};
