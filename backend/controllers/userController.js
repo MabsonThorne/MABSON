@@ -360,7 +360,7 @@ exports.getUserProducts = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const [products] = await db.execute('SELECT * FROM user_products WHERE user_id = ?', [id]);
+    const [products] = await db.execute('SELECT * FROM products WHERE user_id = ?', [id]);
 
     res.json(products);
   } catch (error) {
