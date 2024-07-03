@@ -355,3 +355,16 @@ exports.getSearcherIds = async (req, res) => {
     res.status(500).send('Error fetching searcher IDs');
   }
 };
+
+exports.getUserProducts = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [products] = await db.execute('SELECT * FROM user_products WHERE user_id = ?', [id]);
+
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching user products:', error);
+    res.status(500).send('Server error');
+  }
+};
